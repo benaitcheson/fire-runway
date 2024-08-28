@@ -1,0 +1,29 @@
+<h1>UserAssets#show</h1>
+
+<p>
+  <strong>Item Name:</strong>
+  <%= @user_asset.item_name %>
+</p>
+
+<p>
+  <strong>Purchase Price:</strong>
+  <%= number_to_currency(@user_asset.purchase_price_cents / 100.0, unit: @user_asset.purchase_price_currency) %>
+</p>
+
+<p>
+  <strong>Purchase Date:</strong>
+  <%= @user_asset.purchase_date %>
+</p>
+
+<p>
+  <strong>Created At:</strong>
+  <%= @user_asset.created_at %>
+</p>
+
+<p>
+  <strong>Updated At:</strong>
+  <%= @user_asset.updated_at %>
+</p>
+
+<%= link_to 'Edit', edit_user_asset_path(@user_asset) %> |
+<%= link_to 'Back', user_assets_path %>
