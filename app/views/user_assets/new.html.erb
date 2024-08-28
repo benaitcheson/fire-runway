@@ -1,0 +1,22 @@
+<h1>UserAssets#new</h1>
+<p>Find me in app/views/user_assets/new.html.erb</p>
+
+<%= form_for @user_asset, html: { multipart: true } do |f| %>
+  <%= f.label :item_name %>
+  <%= f.text_field :item_name %>
+  <br>
+
+  <%= f.label :purchase_price_cents %>
+  <%= f.number_field :purchase_price_cents %>
+  <br>
+
+  <%= f.label :purchase_price_currency %>
+  <%= f.text_field :purchase_price_currency, value: "AUD" %>
+  <br>
+
+  <%= f.label :purchase_date %>
+  <%= f.date_select :purchase_date %>
+  <br>
+
+  <%= f.submit %>
+<% end %>

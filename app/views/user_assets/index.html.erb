@@ -1,0 +1,30 @@
+<h1>UserAssets#index</h1>
+<p>Find me in app/views/user_assets/index.html.erb</p>
+
+<%= link_to 'New User Asset', new_user_asset_path %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Item Name</th>
+      <th>Purchase Price (Cents)</th>
+      <th>Purchase Price Currency</th>
+      <th>Purchase Date</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @user_assets.each do |user_asset| %>
+      <tr>
+        <td><%= user_asset.item_name %></td>
+        <td><%= user_asset.purchase_price_cents %></td>
+        <td><%= user_asset.purchase_price_currency %></td>
+        <td><%= user_asset.purchase_date %></td>
+        <td><%= link_to 'Show', user_asset %></td>
+        <td><%= link_to 'Edit', edit_user_asset_path(user_asset) %></td>
+        <td><%= link_to 'Destroy', user_asset, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
