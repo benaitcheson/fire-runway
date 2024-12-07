@@ -12,6 +12,6 @@ Rails.application.routes.draw do
   post "login", to: "sessions#create"
   delete "logout", to: "sessions#destroy", as: :logout
 
-  # user assets crud
   resources :user_assets
+  resources :user_liabilities
 end
