@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_08_28_213445) do
+ActiveRecord::Schema[8.1].define(version: 2024_08_28_213445) do
   create_table "user_assets", force: :cascade do |t|
     t.string "item_name", null: false
     t.integer "purchase_price_cents", null: false
