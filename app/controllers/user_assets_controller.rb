@@ -4,6 +4,7 @@ class UserAssetsController < ApplicationController
   # GET /user_assets
   def index
     @user_assets = current_user.user_assets
+    @total_purchase_price_cents = @user_assets.sum(:purchase_price_cents)
   end
 
   # GET /user_assets/1
