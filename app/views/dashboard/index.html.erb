@@ -43,14 +43,14 @@
       </tr>
     </thead>
     <tbody>
-      <%# <% @user_liabilities.each do |liability| %>
-        <%# <tr class="hover:bg-gray-100"> %>
-          <%# <td class="py-2 px-4 border-b"><%= liability.item_name %></td> %>
-          <%# <td class="py-2 px-4 border-b"><%= liability.amount_cents %></td> %>
-          <%# <td class="py-2 px-4 border-b"><%= liability.amount_currency %></td> %>
-          <%# <td class="py-2 px-4 border-b"><%= liability.created_at %></td> %>
-        <%# </tr> %>
-      <%# <% end %> %>
+      <% @user_liabilities.each do |liability| %>
+        <tr class="hover:bg-gray-100">
+          <td class="py-2 px-4 border-b"><%= liability.item_name %></td>
+          <td class="py-2 px-4 border-b"><%= liability.amount_cents %></td>
+          <td class="py-2 px-4 border-b"><%= liability.amount_currency %></td>
+          <td class="py-2 px-4 border-b"><%= liability.created_at %></td>
+        </tr>
+      <% end %>
     </tbody>
   </table>
 </div>

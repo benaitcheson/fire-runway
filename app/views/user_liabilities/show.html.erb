@@ -1,4 +1,26 @@
-<div>
-  <h1 class="font-bold text-4xl">UserLiabilities#show</h1>
-  <p>Find me in app/views/user_liabilities/show.html.erb</p>
-</div>
+<!-- app/views/user_liabilities/show.html.erb -->
+<h1 class="text-2xl font-bold mb-4">User Liability</h1>
+
+<p>
+  <strong>Item Name:</strong>
+  <%= @user_liability.item_name %>
+</p>
+
+<p>
+  <strong>Amount (Cents):</strong>
+  <%= @user_liability.amount_cents %>
+</p>
+
+<p>
+  <strong>Currency:</strong>
+  <%= @user_liability.amount_currency %>
+</p>
+
+<p>
+  <strong>Created At:</strong>
+  <%= @user_liability.created_at %>
+</p>
+
+<%= link_to 'Edit', edit_user_liability_path(@user_liability) %> |
+<%= link_to 'Back', user_liabilities_path %> |
+<%= link_to 'New', new_user_liability_path %>
