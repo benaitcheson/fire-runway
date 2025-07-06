@@ -1,4 +1,4 @@
-<%= form_with(model: user_asset, local: true) do |form| %>
+<%= form_with(model: user_asset, local: true, data: { controller: "depreciation asset-form", turbo: false, action: "submit->asset-form#submit" }) do |form| %>
   <% if user_asset.errors.any? %>
     <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
       <h3 class="text-red-800 font-semibold mb-2">
@@ -29,6 +29,7 @@
               value: user_asset.purchase_price_cents ? (user_asset.purchase_price_cents / 100.0) : nil,
               step: 0.01,
               min: 0,
+              data: { asset_form_target: "priceField" },
               class: "w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
               placeholder: "0.00" %>
         </div>
@@ -57,6 +58,68 @@
           class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
     </div>
 
+    <!-- Depreciation Section -->
+    <div class="border-t pt-6">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Depreciation Settings</h3>
+      
+      <div class="space-y-4">
+        <div>
+          <%= form.label :depreciation_method, "Depreciation Method", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.select :depreciation_method, 
+              options_for_select(UserAsset::DEPRECIATION_METHODS.map { |k, v| [v, k] }, user_asset.depreciation_method || 'none'),
+              {},
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+              data: { action: "change->depreciation#toggleFields", depreciation_target: "method" } %>
+        </div>
+
+        <!-- Useful Life field - shared between straight line and double declining -->
+        <div id="useful-life-field" class="depreciation-fields hidden">
+          <div>
+            <%= form.label :useful_life_years, "Useful Life (Years)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.number_field :useful_life_years, 
+                min: 1,
+                max: 50,
+                class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                placeholder: "e.g., 5 for a computer, 10 for a vehicle" %>
+            <p class="mt-1 text-xs text-gray-500">How many years will this asset be useful?</p>
+          </div>
+        </div>
+
+        <!-- Depreciation Rate field - for declining balance methods -->
+        <div id="depreciation-rate-field" class="depreciation-fields hidden">
+          <div>
+            <%= form.label :depreciation_rate, "Depreciation Rate (%)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.number_field :depreciation_rate, 
+                step: 0.01,
+                min: 0,
+                max: 100,
+                class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                placeholder: "e.g., 20 for 20% per year" %>
+            <div id="double-declining-note" class="hidden">
+              <p class="mt-1 text-xs text-gray-500">This rate is automatically calculated as 2 ÷ useful life</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="salvage-value-field" class="depreciation-fields hidden">
+          <div>
+            <%= form.label :salvage_value, "Salvage Value", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+              <%= form.number_field :salvage_value_cents, 
+                  value: user_asset.salvage_value_cents ? (user_asset.salvage_value_cents / 100.0) : nil,
+                  step: 0.01,
+                  min: 0,
+                  data: { asset_form_target: "salvageField" },
+                  class: "w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                  placeholder: "0.00" %>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Estimated value at the end of its useful life</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="flex justify-between pt-6 border-t">
       <%= link_to "Cancel", user_assets_path, class: "px-4 py-2 text-gray-700 hover:text-gray-900" %>
       <%= form.submit class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded cursor-pointer" %>
@@ -64,12 +127,3 @@
   </div>
 <% end %>
 
-<script>
-  // Convert dollars to cents before submitting
-  document.querySelector('form').addEventListener('submit', function(e) {
-    const priceField = document.querySelector('#user_asset_purchase_price_cents');
-    if (priceField && priceField.value) {
-      priceField.value = Math.round(parseFloat(priceField.value) * 100);
-    }
-  });
-</script>

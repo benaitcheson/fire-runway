@@ -39,7 +39,16 @@ export default class extends Controller {
       const data = await response.json()
 
       // Display the response
-      this.responseTarget.textContent = data.response
+      let responseText = data.response
+      if (typeof responseText === 'object') {
+        if (responseText.error) {
+          responseText = `Error: ${responseText.error}`
+        } else {
+          responseText = JSON.stringify(responseText, null, 2)
+        }
+      }
+      
+      this.responseTarget.textContent = responseText
       this.responseTarget.parentElement.classList.remove("hidden")
 
     } catch (error) {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2024_12_07_121021) do
+ActiveRecord::Schema[8.1].define(version: 2025_07_06_123318) do
   create_table "user_assets", force: :cascade do |t|
     t.string "item_name", null: false
     t.integer "purchase_price_cents", null: false
@@ -19,6 +19,10 @@ ActiveRecord::Schema[8.1].define(version: 2024_12_07_121021) do
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "depreciation_method", default: "none"
+    t.decimal "depreciation_rate", precision: 5, scale: 2
+    t.integer "useful_life_years"
+    t.integer "salvage_value_cents", default: 0
     t.index ["user_id"], name: "index_user_assets_on_user_id"
   end
 

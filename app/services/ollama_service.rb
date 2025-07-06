@@ -48,10 +48,14 @@ class OllamaService
   private
 
   def extract_response(response)
+    Rails.logger.info "Ollama response: #{response.inspect}"
+    
     if response.is_a?(Array)
       response.map { |r| r['response'] }.join('')
+    elsif response.is_a?(Hash)
+      response['response'] || response.dig('message', 'content') || response
     else
-      response['response'] || response['message']['content']
+      response.to_s
     end
   end
 end

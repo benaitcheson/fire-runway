@@ -5,6 +5,7 @@ class UserAssetsController < ApplicationController
   def index
     @user_assets = current_user.user_assets
     @total_purchase_price_cents = @user_assets.sum(:purchase_price_cents)
+    @total_current_value_cents = @user_assets.sum(&:current_value_cents)
   end
 
   # GET /user_assets/1
@@ -53,6 +54,7 @@ class UserAssetsController < ApplicationController
     end
 
     def user_asset_params
-      params.require(:user_asset).permit(:item_name, :purchase_price_cents, :purchase_price_currency, :purchase_date)
+      params.require(:user_asset).permit(:item_name, :purchase_price_cents, :purchase_price_currency, :purchase_date, 
+                                        :depreciation_method, :depreciation_rate, :useful_life_years, :salvage_value_cents)
     end
 end

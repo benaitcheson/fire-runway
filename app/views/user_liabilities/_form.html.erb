@@ -1,4 +1,4 @@
-<%= form_with(model: user_liability, local: true) do |form| %>
+<%= form_with(model: user_liability, local: true, data: { controller: "asset-form", action: "submit->asset-form#submit", turbo: false }) do |form| %>
   <% if user_liability.errors.any? %>
     <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
       <h3 class="text-red-800 font-semibold mb-2">
@@ -29,6 +29,7 @@
               value: user_liability.amount_cents ? (user_liability.amount_cents / 100.0) : nil,
               step: 0.01,
               min: 0,
+              data: { asset_form_target: "priceField" },
               class: "w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500",
               placeholder: "0.00" %>
         </div>
@@ -72,12 +73,3 @@
   </div>
 <% end %>
 
-<script>
-  // Convert dollars to cents before submitting
-  document.querySelector('form').addEventListener('submit', function(e) {
-    const amountField = document.querySelector('#user_liability_amount_cents');
-    if (amountField && amountField.value) {
-      amountField.value = Math.round(parseFloat(amountField.value) * 100);
-    }
-  });
-</script>
