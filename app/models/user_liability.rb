@@ -20,4 +20,8 @@
 #
 class UserLiability < ApplicationRecord
   belongs_to :user
+  
+  validates :item_name, presence: true, length: { minimum: 2, maximum: 100 }
+  validates :amount_cents, presence: true, numericality: { greater_than: 0 }
+  validates :amount_currency, presence: true, inclusion: { in: %w[AUD USD EUR GBP JPY] }
 end

@@ -1,0 +1,75 @@
+<%= form_with(model: user_asset, local: true) do |form| %>
+  <% if user_asset.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+      <h3 class="text-red-800 font-semibold mb-2">
+        <%= pluralize(user_asset.errors.count, "error") %> prohibited this asset from being saved:
+      </h3>
+      <ul class="list-disc list-inside text-red-700">
+        <% user_asset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="space-y-6">
+    <div>
+      <%= form.label :item_name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.text_field :item_name, 
+          class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+          placeholder: "e.g., MacBook Pro, Toyota Camry, Investment Property" %>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <%= form.label :purchase_price, "Purchase Price", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :purchase_price_cents, 
+              value: user_asset.purchase_price_cents ? (user_asset.purchase_price_cents / 100.0) : nil,
+              step: 0.01,
+              min: 0,
+              class: "w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+              placeholder: "0.00" %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Enter the purchase price in dollars</p>
+      </div>
+
+      <div>
+        <%= form.label :purchase_price_currency, "Currency", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.select :purchase_price_currency, 
+            options_for_select([
+              ["Australian Dollar (AUD)", "AUD"],
+              ["US Dollar (USD)", "USD"],
+              ["Euro (EUR)", "EUR"],
+              ["British Pound (GBP)", "GBP"],
+              ["Japanese Yen (JPY)", "JPY"]
+            ], user_asset.purchase_price_currency || "AUD"),
+            {},
+            class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+    </div>
+
+    <div>
+      <%= form.label :purchase_date, class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.date_field :purchase_date, 
+          value: user_asset.purchase_date || Date.today,
+          class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" %>
+    </div>
+
+    <div class="flex justify-between pt-6 border-t">
+      <%= link_to "Cancel", user_assets_path, class: "px-4 py-2 text-gray-700 hover:text-gray-900" %>
+      <%= form.submit class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded cursor-pointer" %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  // Convert dollars to cents before submitting
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const priceField = document.querySelector('#user_asset_purchase_price_cents');
+    if (priceField && priceField.value) {
+      priceField.value = Math.round(parseFloat(priceField.value) * 100);
+    }
+  });
+</script>

@@ -1,41 +1,10 @@
-<h1>UserAssets#edit</h1>
-
-<%= form_with(model: @user_asset, local: true) do |form| %>
-  <% if @user_asset.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@user_asset.errors.count, "error") %> prohibited this user_asset from being saved:</h2>
-
-      <ul>
-        <% @user_asset.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="field">
-    <%= form.label :item_name %>
-    <%= form.text_field :item_name %>
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold">Edit Asset</h1>
+    <p class="text-gray-600 mt-2">Update the details of your asset</p>
   </div>
 
-  <div class="field">
-    <%= form.label :purchase_price_cents %>
-    <%= form.number_field :purchase_price_cents %>
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <%= render 'form', user_asset: @user_asset %>
   </div>
-
-  <div class="field">
-    <%= form.label :purchase_price_currency %>
-    <%= form.text_field :purchase_price_currency %>
-  </div>
-
-  <div class="field">
-    <%= form.label :purchase_date %>
-    <%= form.date_select :purchase_date %>
-  </div>
-
-  <div class="actions">
-    <%= form.submit "Save changes" %>
-  </div>
-<% end %>
-
-<%= link_to 'Back', @user_asset %>
+</div>

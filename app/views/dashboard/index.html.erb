@@ -1,56 +1,134 @@
-<p>Welcome, <%= current_user.email %></p>
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">Financial Dashboard</h1>
+    <p class="text-gray-600">Welcome back, <%= current_user.email %>!</p>
+  </div>
 
-<h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+  <!-- Net Worth Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600 mb-1">Total Assets</p>
+          <p class="text-2xl font-bold text-green-600">
+            <%= format_currency(@net_worth_data[:user_assets_total], "AUD") %>
+          </p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
 
-<div class="mb-4">
-  <h2 class="text-xl font-bold">Net Worth</h2>
-  <%= line_chart @net_worth_data, xtitle: "Date", ytitle: "Net Worth (Cents)" %>
-</div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600 mb-1">Total Liabilities</p>
+          <p class="text-2xl font-bold text-red-600">
+            <%= format_currency(@net_worth_data[:user_liabilities_total], "AUD") %>
+          </p>
+        </div>
+        <div class="bg-red-100 p-3 rounded-full">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
 
-<div class="mb-4">
-  <h2 class="text-xl font-bold">Assets</h2>
-  <table class="min-w-full bg-white border border-gray-200">
-    <thead>
-      <tr>
-        <th class="py-2 px-4 border-b">Item Name</th>
-        <th class="py-2 px-4 border-b">Purchase Price (Cents)</th>
-        <th class="py-2 px-4 border-b">Currency</th>
-        <th class="py-2 px-4 border-b">Purchase Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @user_assets.each do |asset| %>
-        <tr class="hover:bg-gray-100">
-          <td class="py-2 px-4 border-b"><%= asset.item_name %></td>
-          <td class="py-2 px-4 border-b"><%= asset.purchase_price_cents %></td>
-          <td class="py-2 px-4 border-b"><%= asset.purchase_price_currency %></td>
-          <td class="py-2 px-4 border-b"><%= asset.purchase_date %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600 mb-1">Net Worth</p>
+          <p class="text-2xl font-bold <%= @net_worth_data[:net_worth] >= 0 ? 'text-blue-600' : 'text-orange-600' %>">
+            <%= format_currency(@net_worth_data[:net_worth], "AUD") %>
+          </p>
+        </div>
+        <div class="<%= @net_worth_data[:net_worth] >= 0 ? 'bg-blue-100' : 'bg-orange-100' %> p-3 rounded-full">
+          <svg class="w-8 h-8 <%= @net_worth_data[:net_worth] >= 0 ? 'text-blue-600' : 'text-orange-600' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<div class="mb-4">
-  <h2 class="text-xl font-bold">Liabilities</h2>
-  <table class="min-w-full bg-white border border-gray-200">
-    <thead>
-      <tr>
-        <th class="py-2 px-4 border-b">Item Name</th>
-        <th class="py-2 px-4 border-b">Amount (Cents)</th>
-        <th class="py-2 px-4 border-b">Currency</th>
-        <th class="py-2 px-4 border-b">Created At</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @user_liabilities.each do |liability| %>
-        <tr class="hover:bg-gray-100">
-          <td class="py-2 px-4 border-b"><%= liability.item_name %></td>
-          <td class="py-2 px-4 border-b"><%= liability.amount_cents %></td>
-          <td class="py-2 px-4 border-b"><%= liability.amount_currency %></td>
-          <td class="py-2 px-4 border-b"><%= liability.created_at %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+  <!-- Net Worth Chart -->
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4">Net Worth Breakdown</h2>
+    <div class="mb-4">
+      <%= column_chart [
+        ["Assets", @net_worth_data[:user_assets_total] / 100.0],
+        ["Liabilities", @net_worth_data[:user_liabilities_total] / 100.0],
+        ["Net Worth", @net_worth_data[:net_worth] / 100.0]
+      ], 
+      prefix: "$",
+      thousands: ",",
+      colors: ["#10b981", "#ef4444", @net_worth_data[:net_worth] >= 0 ? "#3b82f6" : "#f97316"],
+      height: "300px" %>
+    </div>
+  </div>
+
+  <!-- Recent Assets and Liabilities -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Assets -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold">Recent Assets</h2>
+          <%= link_to "View All", user_assets_path, class: "text-sm text-blue-600 hover:text-blue-800" %>
+        </div>
+      </div>
+      <div class="p-6">
+        <% if @user_assets.any? %>
+          <div class="space-y-3">
+            <% @user_assets.limit(5).order(created_at: :desc).each do |asset| %>
+              <div class="flex justify-between items-center py-2 border-b last:border-0">
+                <div>
+                  <p class="font-medium"><%= asset.item_name %></p>
+                  <p class="text-sm text-gray-500"><%= format_date(asset.purchase_date) %></p>
+                </div>
+                <p class="font-semibold text-green-600">
+                  <%= format_currency(asset.purchase_price_cents, asset.purchase_price_currency) %>
+                </p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-4">No assets added yet</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Recent Liabilities -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold">Recent Liabilities</h2>
+          <%= link_to "View All", user_liabilities_path, class: "text-sm text-blue-600 hover:text-blue-800" %>
+        </div>
+      </div>
+      <div class="p-6">
+        <% if @user_liabilities.any? %>
+          <div class="space-y-3">
+            <% @user_liabilities.limit(5).order(created_at: :desc).each do |liability| %>
+              <div class="flex justify-between items-center py-2 border-b last:border-0">
+                <div>
+                  <p class="font-medium"><%= liability.item_name %></p>
+                  <p class="text-sm text-gray-500"><%= format_date(liability.created_at.to_date) %></p>
+                </div>
+                <p class="font-semibold text-red-600">
+                  <%= format_currency(liability.amount_cents, liability.amount_currency) %>
+                </p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-4">No liabilities added yet</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

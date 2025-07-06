@@ -1,32 +1,78 @@
-<%= link_to 'New User liability', new_user_liability_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block" %>
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">My Liabilities</h1>
+    <%= link_to 'Add New Liability', new_user_liability_path, class: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" %>
+  </div>
 
-<table class="min-w-full bg-white border border-gray-200">
-  <thead>
-    <tr>
-      <th class="py-2 px-4 border-b">Item Name</th>
-      <th class="py-2 px-4 border-b">Price (Cents)</th>
-      <th class="py-2 px-4 border-b">Currency</th>
-      <th class="py-2 px-4 border-b" colspan="3"></th>
-    </tr>
-  </thead>
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <% if @user_liabilities.any? %>
+      <table class="min-w-full">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="py-3 px-6 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Liability Name</th>
+            <th class="py-3 px-6 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Amount Owed</th>
+            <th class="py-3 px-6 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Date Added</th>
+            <th class="py-3 px-6 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
 
-  <tbody>
-    <% @user_liabilities.each do |user_liability| %>
-      <tr class="hover:bg-gray-100">
-        <td class="py-2 px-4 border-b"><%= user_liability.item_name %></td>
-        <td class="py-2 px-4 border-b"><%= user_liability.amount_cents %></td>
-        <td class="py-2 px-4 border-b"><%= user_liability.amount_currency %></td>
-        <td class="py-2 px-4 border-b"><%= link_to 'Show', user_liability, class: "text-blue-500 hover:text-blue-700" %></td>
-        <td class="py-2 px-4 border-b"><%= link_to 'Edit', edit_user_liability_path(user_liability), class: "text-yellow-500 hover:text-yellow-700" %></td>
-        <td class="py-2 px-4 border-b"><%= link_to 'Destroy', user_liability, method: :delete, data: { confirm: 'Are you sure?' }, class: "text-red-500 hover:text-red-700" %></td>
-      </tr>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @user_liabilities.each do |liability| %>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="py-4 px-6 text-sm font-medium text-gray-900">
+                <%= link_to liability.item_name, user_liability_path(liability), class: "text-blue-600 hover:text-blue-800" %>
+              </td>
+              <td class="py-4 px-6 text-sm text-right text-gray-700">
+                <%= format_currency(liability.amount_cents, liability.amount_currency) %>
+              </td>
+              <td class="py-4 px-6 text-sm text-center text-gray-700">
+                <%= format_date(liability.created_at.to_date) %>
+              </td>
+              <td class="py-4 px-6 text-sm text-center">
+                <div class="flex justify-center space-x-2">
+                  <%= link_to 'Edit', edit_user_liability_path(liability), class: "text-indigo-600 hover:text-indigo-900" %>
+                  <%= link_to 'Delete', user_liability_path(liability), method: :delete, 
+                      data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' }, 
+                      class: "text-red-600 hover:text-red-900" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+
+        <tfoot class="bg-gray-100">
+          <tr>
+            <td class="py-4 px-6 text-sm font-bold text-gray-900">Total Liabilities</td>
+            <td class="py-4 px-6 text-sm font-bold text-right text-gray-900">
+              <%= format_currency(@total_liabilities, "AUD") %>
+            </td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% else %>
+      <div class="p-8 text-center">
+        <p class="text-gray-500 mb-4">You haven't added any liabilities yet.</p>
+        <p class="text-gray-400 text-sm mb-4">Track your debts, loans, and other financial obligations.</p>
+        <%= link_to 'Add Your First Liability', new_user_liability_path, class: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" %>
+      </div>
     <% end %>
-  </tbody>
-  <tfoot>
-    <tr>
-      <td colspan="1" class="py-2 px-4 border-t font-bold">Total</td>
-      <td class="py-2 px-4 border-t"><%= @total_liabilities %></td>
-      <td colspan="5" class="border-t"></td>
-    </tr>
-  </tfoot>
-</table>
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Liabilities</h3>
+      <p class="text-2xl font-bold text-red-600"><%= format_currency(@total_liabilities, "AUD") %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Number of Liabilities</h3>
+      <p class="text-2xl font-bold text-orange-600"><%= @user_liabilities.count %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Average Liability</h3>
+      <p class="text-2xl font-bold text-yellow-600">
+        <%= @user_liabilities.any? ? format_currency(@total_liabilities / @user_liabilities.count, "AUD") : "$0.00" %>
+      </p>
+    </div>
+  </div>
+</div>
