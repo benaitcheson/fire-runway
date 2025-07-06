@@ -1,5 +1,4 @@
 class UsersController < ApplicationController
-
   def new
     @user = User.new
   end
@@ -7,11 +6,10 @@ class UsersController < ApplicationController
   def create
     @user = User.new(user_params)
     if @user.save
-      debugger
-      @user.send_confirmation_email!
+      # @user.send_confirmation_email!
       redirect_to root_path, notice: 'A confirmation email has been sent to your registered email.'
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_entity, notice: @user.errors.full_messages.join(', ')
     end
   end
 

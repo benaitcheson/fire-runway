@@ -1,0 +1,15 @@
+<%= form_for @user_liability, html: { multipart: true } do |f| %>
+  <%= f.label :item_name %>
+  <%= f.text_field :item_name %>
+  <br>
+
+  <%= f.label :amount_cents %>
+  <%= f.number_field :amount_cents %>
+  <br>
+
+  <%= f.label :amount_currency %>
+  <%= f.text_field :amount_currency, value: "AUD" %>
+  <br>
+
+  <%= f.submit %>
+<% end %>
