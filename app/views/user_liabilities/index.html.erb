@@ -4,9 +4,8 @@
   <thead>
     <tr>
       <th class="py-2 px-4 border-b">Item Name</th>
-      <th class="py-2 px-4 border-b">Purchase Price (Cents)</th>
-      <th class="py-2 px-4 border-b">Purchase Price Currency</th>
-      <th class="py-2 px-4 border-b">Purchase Date</th>
+      <th class="py-2 px-4 border-b">Price (Cents)</th>
+      <th class="py-2 px-4 border-b">Currency</th>
       <th class="py-2 px-4 border-b" colspan="3"></th>
     </tr>
   </thead>
@@ -15,9 +14,8 @@
     <% @user_liabilities.each do |user_liability| %>
       <tr class="hover:bg-gray-100">
         <td class="py-2 px-4 border-b"><%= user_liability.item_name %></td>
-        <td class="py-2 px-4 border-b"><%= user_liability.purchase_price_cents %></td>
-        <td class="py-2 px-4 border-b"><%= user_liability.purchase_price_currency %></td>
-        <td class="py-2 px-4 border-b"><%= user_liability.purchase_date %></td>
+        <td class="py-2 px-4 border-b"><%= user_liability.amount_cents %></td>
+        <td class="py-2 px-4 border-b"><%= user_liability.amount_currency %></td>
         <td class="py-2 px-4 border-b"><%= link_to 'Show', user_liability, class: "text-blue-500 hover:text-blue-700" %></td>
         <td class="py-2 px-4 border-b"><%= link_to 'Edit', edit_user_liability_path(user_liability), class: "text-yellow-500 hover:text-yellow-700" %></td>
         <td class="py-2 px-4 border-b"><%= link_to 'Destroy', user_liability, method: :delete, data: { confirm: 'Are you sure?' }, class: "text-red-500 hover:text-red-700" %></td>

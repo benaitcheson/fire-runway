@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.3.4"
+ruby "3.4.4"
 
 gem "rails", github: "rails/rails", branch: "main"
 
@@ -42,6 +42,9 @@ gem "bootsnap", require: false
 
 # gem specific to this application
 gem "shopify-money"
+
+# AI/LLM integration
+gem "ollama-ai"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"

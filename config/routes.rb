@@ -14,4 +14,8 @@ Rails.application.routes.draw do
 
   resources :user_assets
   resources :user_liabilities
+  
+  # AI Assistant routes
+  get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant
+  post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat
 end
