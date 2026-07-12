@@ -1,0 +1,156 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">Investment Comparison</h1>
+    <p class="text-gray-600">Compare investment property vs leveraged shares vs a hybrid approach</p>
+  </div>
+
+  <!-- Input Form -->
+  <%= form_with url: investment_comparison_calculate_path, method: :post, data: { controller: "investment-sliders", turbo_frame: "comparison_results" } do |f| %>
+    <!-- General Inputs -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-4">Your Situation</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <%= render "input_field", name: "initial_capital", label: "Initial Capital ($)", value: @params[:initial_capital].to_i, min: 0, max: 500_000, step: 5_000 %>
+        <%= render "input_field", name: "monthly_savings", label: "Monthly Savings ($)", value: @params[:monthly_savings].to_i, min: 0, max: 10_000, step: 100 %>
+        <%= render "input_field", name: "salary", label: "Annual Salary ($)", value: @params[:salary].to_i, min: 50_000, max: 300_000, step: 5_000 %>
+        <%= render "input_field", name: "salary_growth_rate", label: "Salary Growth (%)", value: @params[:salary_growth_rate], min: 0, max: 20, step: 0.5 %>
+        <%= render "input_field", name: "tax_rate", label: "Marginal Tax Rate (%)", value: @params[:tax_rate], min: 0, max: 47, step: 0.5 %>
+        <%= render "input_field", name: "timeframe", label: "Timeframe (years)", value: @params[:timeframe].to_i, min: 5, max: 30, step: 1 %>
+      </div>
+    </div>
+
+    <!-- Property Inputs -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-1">Investment Property</h2>
+      <p class="text-sm text-gray-500 mb-4">Used in Property and Hybrid scenarios</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <%= render "input_field", name: "property_price", label: "Purchase Price ($)", value: @params[:property_price].to_i, min: 200_000, max: 1_500_000, step: 10_000 %>
+        <%= render "input_field", name: "property_interest_rate", label: "Mortgage Rate (%)", value: @params[:property_interest_rate], min: 3, max: 10, step: 0.1 %>
+        <%= render "input_field", name: "property_rental_yield", label: "Rental Yield (%)", value: @params[:property_rental_yield], min: 1, max: 8, step: 0.1 %>
+        <%= render "input_field", name: "property_growth_rate", label: "Capital Growth (%)", value: @params[:property_growth_rate], min: 0, max: 12, step: 0.5 %>
+      </div>
+    </div>
+
+    <!-- NAB EB Inputs -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-1">NAB Equity Builder</h2>
+      <p class="text-sm text-gray-500 mb-4">Used in NAB EB and Hybrid scenarios</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <%= render "input_field", name: "nab_loan_amount", label: "EB Loan Amount ($)", value: @params[:nab_loan_amount].to_i, min: 20_000, max: 1_000_000, step: 10_000 %>
+        <%= render "input_field", name: "nab_interest_rate", label: "EB Base Rate - $250k+ (%)", value: @params[:nab_interest_rate], min: 3, max: 15, step: 0.1 %>
+        <%= render "input_field", name: "nab_small_loan_premium", label: "Small Loan Premium - under $250k (%)", value: @params[:nab_small_loan_premium], min: 0, max: 5, step: 0.1 %>
+        <%= render "input_field", name: "nab_loan_term", label: "EB Loan Term (years)", value: @params[:nab_loan_term].to_i, min: 3, max: 10, step: 1 %>
+      </div>
+
+      <!-- ETF Portfolio Allocation -->
+      <div class="mt-6" data-controller="etf-blend">
+        <h3 class="text-lg font-semibold mb-3">ETF Portfolio Allocation</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b-2 text-gray-600">
+                <th class="text-left py-2 px-2">ETF</th>
+                <th class="text-right py-2 px-2 w-24">Allocation %</th>
+                <th class="text-right py-2 px-2 w-28">Capital Return %</th>
+                <th class="text-right py-2 px-2 w-28">Dividend Yield %</th>
+                <th class="text-right py-2 px-2 w-28">Total Return %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @params[:etfs].each_with_index do |etf, i| %>
+                <tr class="border-b">
+                  <td class="py-2 px-2">
+                    <input type="text" name="etfs[<%= i %>][name]" value="<%= etf[:name] %>"
+                           class="w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="ETF name">
+                  </td>
+                  <td class="py-2 px-2">
+                    <input type="number" name="etfs[<%= i %>][allocation]" value="<%= etf[:allocation] %>"
+                           min="0" max="100" step="1"
+                           class="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                           data-etf-blend-target="allocation" data-action="input->etf-blend#calculate">
+                  </td>
+                  <td class="py-2 px-2">
+                    <input type="number" name="etfs[<%= i %>][capital_return]" value="<%= etf[:capital_return] %>"
+                           min="0" max="30" step="0.1"
+                           class="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                           data-etf-blend-target="capitalReturn" data-action="input->etf-blend#calculate">
+                  </td>
+                  <td class="py-2 px-2">
+                    <input type="number" name="etfs[<%= i %>][dividend_yield]" value="<%= etf[:dividend_yield] %>"
+                           min="0" max="15" step="0.1"
+                           class="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                           data-etf-blend-target="dividendYield" data-action="input->etf-blend#calculate">
+                  </td>
+                  <td class="py-2 px-2 text-right font-medium" data-etf-blend-target="totalReturn">
+                    <%= (etf[:capital_return].to_f + etf[:dividend_yield].to_f).round(1) %>%
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 font-semibold bg-gray-50">
+                <td class="py-2 px-2">Weighted Blend</td>
+                <td class="py-2 px-2 text-right" data-etf-blend-target="totalAllocation">
+                  <%= @params[:etfs].sum { |e| e[:allocation].to_f }.round(0) %>%
+                </td>
+                <td class="py-2 px-2 text-right" data-etf-blend-target="blendedReturn">
+                  <%= @params[:etfs].sum { |e| e[:allocation].to_f / 100.0 * e[:capital_return].to_f }.round(1) %>%
+                </td>
+                <td class="py-2 px-2 text-right" data-etf-blend-target="blendedYield">
+                  <%= @params[:etfs].sum { |e| e[:allocation].to_f / 100.0 * e[:dividend_yield].to_f }.round(1) %>%
+                </td>
+                <td class="py-2 px-2 text-right" data-etf-blend-target="blendedTotal">
+                  <%= @params[:etfs].sum { |e| e[:allocation].to_f / 100.0 * (e[:capital_return].to_f + e[:dividend_yield].to_f) }.round(1) %>%
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <!-- Hidden fields for the blended values used by scenarios -->
+        <input type="hidden" name="etf_return_rate" data-etf-blend-target="hiddenReturn"
+               value="<%= @params[:etfs].sum { |e| e[:allocation].to_f / 100.0 * e[:capital_return].to_f }.round(2) %>">
+        <input type="hidden" name="etf_dividend_yield" data-etf-blend-target="hiddenYield"
+               value="<%= @params[:etfs].sum { |e| e[:allocation].to_f / 100.0 * e[:dividend_yield].to_f }.round(2) %>">
+      </div>
+
+      <% nab_effective = @params[:nab_loan_amount].to_f >= 250_000 ? @params[:nab_interest_rate].to_f : @params[:nab_interest_rate].to_f + @params[:nab_small_loan_premium].to_f %>
+      <% hybrid_effective = @params[:hybrid_nab_loan_amount].to_f >= 250_000 ? @params[:nab_interest_rate].to_f : @params[:nab_interest_rate].to_f + @params[:nab_small_loan_premium].to_f %>
+      <div class="mt-3 text-sm text-gray-600 bg-gray-50 rounded p-3">
+        <p>Effective rate on EB scenario ($<%= number_with_delimiter(@params[:nab_loan_amount].to_i) %> loan): <strong><%= nab_effective %>%</strong></p>
+        <p>Effective rate on Hybrid scenario ($<%= number_with_delimiter(@params[:hybrid_nab_loan_amount].to_i) %> loan): <strong><%= hybrid_effective %>%</strong></p>
+      </div>
+    </div>
+
+    <!-- Hybrid Inputs -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-1">Hybrid Strategy</h2>
+      <p class="text-sm text-gray-500 mb-4">Start with a smaller EB loan, buy property later</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <%= render "input_field", name: "hybrid_nab_loan_amount", label: "Initial EB Loan ($)", value: @params[:hybrid_nab_loan_amount].to_i, min: 20_000, max: 500_000, step: 5_000 %>
+        <%= render "input_field", name: "hybrid_property_year", label: "Buy Property at Year", value: @params[:hybrid_property_year].to_i, min: 1, max: 15, step: 1 %>
+      </div>
+    </div>
+
+    <!-- Property Snowball Inputs -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-1">Property Snowball</h2>
+      <p class="text-sm text-gray-500 mb-4">Buy multiple properties using equity from existing ones as deposits</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <%= render "input_field", name: "max_properties", label: "Max Properties", value: @params[:max_properties].to_i, min: 2, max: 10, step: 1 %>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+        Calculate & Compare
+      </button>
+    </div>
+  <% end %>
+
+  <!-- Results -->
+  <turbo-frame id="comparison_results">
+    <% if @results %>
+      <%= render "results", results: @results, params: @params %>
+    <% end %>
+  </turbo-frame>
+</div>

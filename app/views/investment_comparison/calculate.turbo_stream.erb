@@ -1,0 +1,5 @@
+<%= turbo_stream.replace "comparison_results" do %>
+  <turbo-frame id="comparison_results">
+    <%= render "results", results: @results, params: @params %>
+  </turbo-frame>
+<% end %>

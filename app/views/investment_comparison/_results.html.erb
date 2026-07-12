@@ -1,0 +1,111 @@
+<!-- Upfront Capital Required -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 class="text-xl font-bold mb-4">Upfront Capital Required</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <% results[:scenarios].each do |scenario| %>
+      <div class="border rounded-lg p-4 text-center" style="border-left: 4px solid <%= scenario[:color] %>">
+        <p class="text-sm text-gray-600"><%= scenario[:name] %></p>
+        <p class="text-2xl font-bold"><%= number_to_currency(scenario[:upfront], precision: 0) %></p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Equity Growth Chart -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 class="text-xl font-bold mb-4">Equity Growth Over Time</h2>
+  <%= line_chart results[:chart_data].map { |s| { name: s[:name], data: s[:data] } },
+    prefix: "$",
+    thousands: ",",
+    height: "400px",
+    colors: results[:chart_data].map { |s| s[:color] },
+    library: { scales: { y: { ticks: { callback: "function(value) { return '$' + value.toLocaleString(); }" } } } } %>
+</div>
+
+<!-- Milestone Comparison -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 class="text-xl font-bold mb-4">Key Milestones</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b-2">
+          <th class="text-left py-2 px-3">Year</th>
+          <% results[:scenarios].each do |s| %>
+            <th class="text-right py-2 px-3" colspan="3" style="color: <%= s[:color] %>"><%= s[:name] %></th>
+          <% end %>
+        </tr>
+        <tr class="border-b text-gray-500 text-xs">
+          <th></th>
+          <% results[:scenarios].each do |_| %>
+            <th class="text-right py-1 px-3">Equity</th>
+            <th class="text-right py-1 px-3">Debt</th>
+            <th class="text-right py-1 px-3">Invested</th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% results[:milestones].each do |milestone| %>
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-2 px-3 font-medium">Year <%= milestone[:year] %></td>
+            <% milestone[:scenarios].each do |s| %>
+              <td class="text-right py-2 px-3 font-semibold"><%= number_to_currency(s[:equity], precision: 0) %></td>
+              <td class="text-right py-2 px-3 text-red-500"><%= number_to_currency(s[:loan_balance], precision: 0) %></td>
+              <td class="text-right py-2 px-3 text-gray-500"><%= number_to_currency(s[:cumulative_invested], precision: 0) %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detailed Year-by-Year Table -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 class="text-xl font-bold mb-4">Year-by-Year Breakdown</h2>
+
+  <% results[:scenarios].each do |scenario| %>
+    <details class="mb-4">
+      <summary class="cursor-pointer font-semibold text-lg py-2" style="color: <%= scenario[:color] %>">
+        <%= scenario[:name] %>
+      </summary>
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 text-gray-600">
+              <th class="text-left py-2 px-2">Year</th>
+              <th class="text-right py-2 px-2">Asset Value</th>
+              <th class="text-right py-2 px-2">Loan Balance</th>
+              <th class="text-right py-2 px-2">Equity</th>
+              <th class="text-right py-2 px-2">Income</th>
+              <th class="text-right py-2 px-2">Costs</th>
+              <th class="text-right py-2 px-2">Tax Benefit</th>
+              <th class="text-right py-2 px-2">Net Cash Flow</th>
+              <% if scenario[:yearly_data].any? { |r| r[:property_count] } %>
+                <th class="text-right py-2 px-2"># Properties</th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% scenario[:yearly_data].each do |row| %>
+              <tr class="border-b hover:bg-gray-50 <%= row[:property_count] && row[:property_count] > (scenario[:yearly_data][[scenario[:yearly_data].index(row) - 1, 0].max][:property_count] || 0) ? 'bg-yellow-50' : '' %>">
+                <td class="py-1 px-2"><%= row[:year] %></td>
+                <td class="text-right py-1 px-2"><%= number_to_currency(row[:asset_value], precision: 0) %></td>
+                <td class="text-right py-1 px-2 text-red-500"><%= number_to_currency(row[:loan_balance], precision: 0) %></td>
+                <td class="text-right py-1 px-2 font-semibold"><%= number_to_currency(row[:equity], precision: 0) %></td>
+                <td class="text-right py-1 px-2 text-green-600"><%= number_to_currency(row[:annual_income], precision: 0) %></td>
+                <td class="text-right py-1 px-2 text-red-500"><%= number_to_currency(row[:annual_costs], precision: 0) %></td>
+                <td class="text-right py-1 px-2 text-blue-600"><%= number_to_currency(row[:tax_benefit], precision: 0) %></td>
+                <td class="text-right py-1 px-2 <%= row[:net_cashflow] >= 0 ? 'text-green-600' : 'text-red-500' %>">
+                  <%= number_to_currency(row[:net_cashflow], precision: 0) %>
+                </td>
+                <% if row[:property_count] %>
+                  <td class="text-right py-1 px-2 font-semibold"><%= row[:property_count] %></td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  <% end %>
+</div>

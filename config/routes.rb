@@ -18,4 +18,8 @@ Rails.application.routes.draw do
   # AI Assistant routes
   get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant
   post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat
+
+  # Investment Comparison
+  get "investment_comparison", to: "investment_comparison#index", as: :investment_comparison
+  post "investment_comparison/calculate", to: "investment_comparison#calculate", as: :investment_comparison_calculate
 end
