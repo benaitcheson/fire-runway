@@ -93,6 +93,18 @@
     </div>
   </div>
 
+  <% if @asset_value_timeline.any? %>
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Total Asset Value Over Time</h3>
+      <%= line_chart @asset_value_timeline,
+          height: "300px",
+          prefix: "$",
+          thousands: ",",
+          colors: ["#10b981"],
+          curve: false %>
+    </div>
+  <% end %>
+
   <% if @user_assets.any? { |asset| asset.depreciation_method != 'none' } %>
     <div class="mt-8 bg-white rounded-lg shadow p-6">
       <h3 class="text-xl font-semibold text-gray-700 mb-4">Asset Values Overview</h3>

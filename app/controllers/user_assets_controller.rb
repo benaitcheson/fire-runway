@@ -6,6 +6,7 @@ class UserAssetsController < ApplicationController
     @user_assets = current_user.user_assets
     @total_purchase_price_cents = @user_assets.sum(:purchase_price_cents)
     @total_current_value_cents = @user_assets.sum(&:current_value_cents)
+    @asset_value_timeline = current_user.asset_value_timeline
   end
 
   # GET /user_assets/1

@@ -5,6 +5,7 @@ class UserLiabilitiesController < ApplicationController
   def index
     @user_liabilities = current_user.user_liabilities
     @total_liabilities = @user_liabilities.sum(:amount_cents)
+    @liability_timeline = current_user.liability_timeline
   end
 
   # GET /user_liabilities/1
