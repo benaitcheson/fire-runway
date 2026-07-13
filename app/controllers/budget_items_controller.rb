@@ -1,6 +1,4 @@
 class BudgetItemsController < ApplicationController
-  before_action :require_login
-
   # POST /budget_items
   def create
     item = current_user.budget_items.build(budget_item_params)
@@ -31,10 +29,6 @@ class BudgetItemsController < ApplicationController
   end
 
   private
-
-  def require_login
-    redirect_to login_path, alert: "Please log in first." unless user_signed_in?
-  end
 
   def budget_item_params
     params.require(:budget_item).permit(:name, :amount, :frequency, :section)

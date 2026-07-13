@@ -1,4 +1,6 @@
 class ConfirmationsController < ApplicationController
+  skip_before_action :require_login
+
   def confirm_email
     @user = User.find_signed(params[:confirmation_token])
 

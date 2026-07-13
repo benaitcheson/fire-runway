@@ -7,30 +7,49 @@ demo = User.find_or_create_by!(email: "demo@example.com") do |user|
 end
 demo.confirm!
 
+# Values are randomised within a plausible range per item on first creation;
+# re-running the seeds leaves existing records untouched.
+dollars = ->(min, max) { rand(min..max) * 100 }
+date_between = ->(from, to) { rand(from..to) }
+
 assets = [
-  { item_name: "Car", purchase_price_cents: 2_500_000, purchase_date: Date.new(2020, 3, 1),
-    depreciation_method: "straight_line", useful_life_years: 10, salvage_value_cents: 250_000 },
-  { item_name: "Laptop", purchase_price_cents: 320_000, purchase_date: Date.new(2023, 1, 15),
-    depreciation_method: "straight_line", useful_life_years: 5, salvage_value_cents: 0 },
-  { item_name: "Motorbike", purchase_price_cents: 800_000, purchase_date: Date.new(2021, 6, 20),
-    depreciation_method: "declining_balance", depreciation_rate: 20.0, salvage_value_cents: 0 },
-  { item_name: "Cash savings", purchase_price_cents: 4_000_000, purchase_date: Date.new(2025, 1, 1),
+  { item_name: "Car", purchase_price_cents: dollars.(15_000, 45_000),
+    purchase_date: date_between.(Date.new(2018, 1, 1), Date.new(2023, 12, 31)),
+    depreciation_method: "straight_line", useful_life_years: 10 },
+  { item_name: "Laptop", purchase_price_cents: dollars.(1_500, 5_000),
+    purchase_date: date_between.(Date.new(2022, 1, 1), Date.new(2025, 6, 30)),
+    depreciation_method: "straight_line", useful_life_years: 5 },
+  { item_name: "Motorbike", purchase_price_cents: dollars.(4_000, 15_000),
+    purchase_date: date_between.(Date.new(2019, 1, 1), Date.new(2024, 12, 31)),
+    depreciation_method: "declining_balance", depreciation_rate: 20.0 },
+  { item_name: "Cash savings", purchase_price_cents: dollars.(5_000, 80_000),
+    purchase_date: date_between.(Date.new(2024, 6, 1), Date.today),
     depreciation_method: "none" },
-  { item_name: "ETF portfolio", purchase_price_cents: 6_500_000, purchase_date: Date.new(2025, 1, 1),
+  { item_name: "ETF portfolio", purchase_price_cents: dollars.(10_000, 150_000),
+    purchase_date: date_between.(Date.new(2024, 6, 1), Date.today),
     depreciation_method: "none" },
-  { item_name: "Superannuation", purchase_price_cents: 9_000_000, purchase_date: Date.new(2025, 1, 1),
+  { item_name: "Superannuation", purchase_price_cents: dollars.(30_000, 250_000),
+    purchase_date: date_between.(Date.new(2024, 6, 1), Date.today),
     depreciation_method: "none" }
 ]
 
 assets.each do |attrs|
   demo.user_assets.find_or_create_by!(item_name: attrs[:item_name]) do |asset|
-    asset.assign_attributes(purchase_price_currency: "AUD", **attrs)
+    salvage = attrs[:depreciation_method] == "none" ? nil : attrs[:purchase_price_cents] / rand(8..20)
+    asset.assign_attributes(purchase_price_currency: "AUD", salvage_value_cents: salvage, **attrs)
   end
 end
 
-demo.user_liabilities.find_or_create_by!(item_name: "HECS debt") do |liability|
-  liability.amount_cents = 3_000_000
-  liability.amount_currency = "AUD"
+liabilities = [
+  { item_name: "HECS debt", amount_cents: dollars.(10_000, 60_000) },
+  { item_name: "Credit card", amount_cents: dollars.(500, 8_000) },
+  { item_name: "Car loan", amount_cents: dollars.(3_000, 25_000) }
+]
+
+liabilities.each do |attrs|
+  demo.user_liabilities.find_or_create_by!(item_name: attrs[:item_name]) do |liability|
+    liability.assign_attributes(amount_currency: "AUD", **attrs)
+  end
 end
 
 puts "Seeded: #{User.count} users, #{UserAsset.count} assets, #{UserLiability.count} liabilities"
