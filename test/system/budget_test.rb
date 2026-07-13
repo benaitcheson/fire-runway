@@ -52,6 +52,8 @@ class BudgetTest < ApplicationSystemTestCase
     puts "error: #{e.class}: #{e.message.lines.first}"
     puts "ready state: #{page.evaluate_script("document.readyState") rescue $!}"
     puts "turbo loaded: #{page.evaluate_script("!!window.Turbo") rescue $!}"
+    puts "confirm dialog ready: #{page.evaluate_script("!!window.__confirmDialogReady") rescue $!}"
+    puts "chartkick loaded: #{page.evaluate_script("!!window.Chartkick") rescue $!}"
     puts "dialog in dom: #{page.evaluate_script("!!document.querySelector('dialog')") rescue $!}"
     logs = begin
       page.driver.browser.logs.get(:browser).map { |l| "#{l.level}: #{l.message}" }
