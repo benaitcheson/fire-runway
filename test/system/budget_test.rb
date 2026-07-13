@@ -47,7 +47,7 @@ class BudgetTest < ApplicationSystemTestCase
   # submissions (inline edit, delete dialog) appear to do nothing.
   def with_flake_diagnostics
     yield
-  rescue StandardError => e
+  rescue Exception => e
     puts "=== FLAKE DIAGNOSTICS ==="
     puts "error: #{e.class}: #{e.message.lines.first}"
     puts "ready state: #{page.evaluate_script("document.readyState") rescue $!}"
