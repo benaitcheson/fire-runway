@@ -2,12 +2,12 @@
 
 one:
   item_name: MyString
-  amount_cents: 1
-  amount_currency: MyString
+  amount_cents: 100_000
+  amount_currency: AUD
   user: one
 
 two:
   item_name: MyString
-  amount_cents: 1
-  amount_currency: MyString
+  amount_cents: 100_000
+  amount_currency: AUD
   user: two
