@@ -26,6 +26,22 @@ class BudgetTest < ApplicationSystemTestCase
 
     assert_no_selector "tr", text: "Rates"
     assert_not @user.budget_items.exists?(name: "Rates")
+  rescue StandardError => e
+    # TEMPORARY diagnostics for a CI-only flake where the dialog never opens.
+    puts "=== FLAKE DIAGNOSTICS ==="
+    puts "error: #{e.class}: #{e.message}"
+    puts "turbo loaded: #{page.evaluate_script("!!window.Turbo") rescue $!}"
+    puts "confirm overridden: #{page.evaluate_script("window.Turbo && !String(Turbo.session.formSubmitObserver ? '' : '') && true") rescue $!}"
+    puts "dialog in dom: #{page.evaluate_script("!!document.querySelector('dialog')") rescue $!}"
+    puts "ready state: #{page.evaluate_script("document.readyState") rescue $!}"
+    logs = begin
+      page.driver.browser.logs.get(:browser).map { |l| "#{l.level}: #{l.message}" }
+    rescue StandardError => log_err
+      ["logs unavailable: #{log_err.message}"]
+    end
+    puts "console:", logs
+    puts "========================="
+    raise
   end
 
   test "editing an amount recalculates totals in place" do

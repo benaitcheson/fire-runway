@@ -39,6 +39,14 @@ jobs:
       - name: Run tests
         run: bin/rails test:all
 
+      # TEMPORARY: hunting an intermittent dialog flake on CI runners
+      - name: Flake hunt
+        if: always()
+        run: |
+          for i in 1 2 3 4 5 6; do
+            bin/rails test test/system/budget_test.rb -n test_deleting_a_budget_row_via_the_styled_confirm_dialog || true
+          done
+
       - name: Upload failure screenshots
         uses: actions/upload-artifact@v4
         if: failure()
