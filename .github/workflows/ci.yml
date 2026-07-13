@@ -39,6 +39,14 @@ jobs:
       - name: Run tests
         run: bin/rails test:all
 
+      # TEMPORARY: repeat system tests to catch an intermittent flake with diagnostics
+      - name: Flake hunt
+        if: always()
+        run: |
+          for i in 1 2 3 4 5 6 7 8; do
+            bin/rails test test/system/budget_test.rb || true
+          done
+
       - name: Upload failure screenshots
         uses: actions/upload-artifact@v4
         if: failure()

@@ -53,6 +53,9 @@ class BudgetTest < ApplicationSystemTestCase
       const log = (name, detail) => window.__events.push(name + (detail ? " " + detail : ""));
       addEventListener("click", (e) => log("click", e.target.tagName + "." + (e.target.className || "").slice(0, 40)), true);
       addEventListener("change", (e) => log("change", e.target.id), true);
+      addEventListener("focusin", (e) => log("focusin", e.target.id || e.target.tagName), true);
+      addEventListener("input", (e) => log("input", e.target.id + "=" + (e.target.value || "")), true);
+      addEventListener("keydown", (e) => log("keydown", e.key), true);
       addEventListener("submit", (e) => log("submit", (e.target.action || "") + " prevented=" + e.defaultPrevented), true);
       ["turbo:submit-start", "turbo:submit-end", "turbo:before-fetch-request",
        "turbo:before-fetch-response", "turbo:fetch-request-error", "turbo:visit",
@@ -80,6 +83,9 @@ class BudgetTest < ApplicationSystemTestCase
     end
     puts "console:", logs
     puts "event trace: #{page.evaluate_script("window.__events") rescue $!}"
+    puts "active element: #{page.evaluate_script("document.activeElement && (document.activeElement.id || document.activeElement.tagName)") rescue $!}"
+    puts "rent field value: #{page.evaluate_script("(document.querySelector('[id^=amount_budget_item_]') || {}).value") rescue $!}"
+    puts "window handles: #{page.driver.browser.window_handles.size rescue $!}"
     log_file = Rails.root.join("log/test.log")
     puts "--- last requests in test.log ---"
     puts File.readlines(log_file).last(60).join if File.exist?(log_file)
