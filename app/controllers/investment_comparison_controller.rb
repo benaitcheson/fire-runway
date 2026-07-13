@@ -16,9 +16,49 @@ class InvestmentComparisonController < ApplicationController
 
   private
 
-  # Defaults are randomised within plausible ranges on each visit; they only
-  # pre-fill the form, so nothing is persisted.
+  # Pre-fill the form from the user's actual assets and budget where present,
+  # falling back to randomised plausible values. Nothing is persisted.
   def default_params
+    random_defaults.merge(user_defaults.compact)
+  end
+
+  def user_defaults
+    {
+      initial_capital: investable_capital,
+      monthly_savings: monthly_surplus,
+      salary: estimated_gross_salary
+    }
+  end
+
+  # Current value of financial (non-depreciating) assets, excluding super,
+  # which is locked away and not investable.
+  def investable_capital
+    cents = current_user.user_assets
+      .where(depreciation_method: "none")
+      .reject { |asset| asset.item_name.match?(/super/i) }
+      .sum(&:current_value_cents)
+    cents.positive? ? (cents / 100.0).round(-3) : nil
+  end
+
+  def monthly_surplus
+    income = budget_yearly_cents("income")
+    return nil if income.zero?
+
+    surplus = income - budget_yearly_cents("bills") - budget_yearly_cents("everyday")
+    surplus.positive? ? (surplus / 12.0 / 100.0).round(-2) : nil
+  end
+
+  # Budget income is net; approximate gross using a ~30% effective tax rate.
+  def estimated_gross_salary
+    net = budget_yearly_cents("income")
+    net.positive? ? (net / 100.0 / 0.7).round(-3) : nil
+  end
+
+  def budget_yearly_cents(section)
+    current_user.budget_items.in_section(section).sum(&:yearly_cents)
+  end
+
+  def random_defaults
     {
       initial_capital: rand(20..100) * 1_000,
       monthly_savings: rand(10..40) * 100,
