@@ -16,37 +16,42 @@ class InvestmentComparisonController < ApplicationController
 
   private
 
+  # Defaults are randomised within plausible ranges on each visit; they only
+  # pre-fill the form, so nothing is persisted.
   def default_params
     {
-      initial_capital: 56_000,
-      monthly_savings: 2_400,
-      salary: 120_000,
-      salary_growth_rate: 10.0,
+      initial_capital: rand(20..100) * 1_000,
+      monthly_savings: rand(10..40) * 100,
+      salary: rand(16..36) * 5_000,
+      salary_growth_rate: rand(2.0..8.0).round(1),
       tax_rate: 37.0,
-      timeframe: 25,
-      property_price: 400_000,
-      property_interest_rate: 6.5,
-      property_rental_yield: 4.0,
-      property_growth_rate: 5.0,
-      nab_loan_amount: 300_000,
-      nab_interest_rate: 7.5,
+      timeframe: rand(3..6) * 5,
+      property_price: rand(14..32) * 25_000,
+      property_interest_rate: rand(5.5..7.5).round(1),
+      property_rental_yield: rand(3.0..5.5).round(1),
+      property_growth_rate: rand(3.0..7.0).round(1),
+      nab_loan_amount: rand(4..20) * 25_000,
+      nab_interest_rate: rand(6.5..9.0).round(1),
       nab_small_loan_premium: 2.0,
-      nab_loan_term: 10,
-      etf_return_rate: 10.1,
-      etf_dividend_yield: 2.8,
-      hybrid_property_year: 3,
-      hybrid_nab_loan_amount: 75_000,
+      nab_loan_term: [10, 15].sample,
+      etf_return_rate: rand(7.0..12.0).round(1),
+      etf_dividend_yield: rand(1.5..4.5).round(1),
+      hybrid_property_year: rand(2..5),
+      hybrid_nab_loan_amount: rand(2..6) * 25_000,
       max_properties: 5,
       etfs: default_etfs
     }
   end
 
   def default_etfs
+    growth = rand(30..60).round(-1)
+    mid = rand(10..(90 - growth)).round(-1)
+    defensive = 100 - growth - mid
     [
-      { name: "IVV", allocation: 40, capital_return: 12.0, dividend_yield: 1.3 },
-      { name: "MVW", allocation: 30, capital_return: 8.0, dividend_yield: 3.5 },
-      { name: "VAP", allocation: 30, capital_return: 6.5, dividend_yield: 4.0 },
-      { name: "",    allocation: 0,  capital_return: 0.0, dividend_yield: 0.0 }
+      { name: "IVV", allocation: growth,    capital_return: 12.0, dividend_yield: 1.3 },
+      { name: "MVW", allocation: mid,       capital_return: 8.0,  dividend_yield: 3.5 },
+      { name: "VAP", allocation: defensive, capital_return: 6.5,  dividend_yield: 4.0 },
+      { name: "",    allocation: 0,         capital_return: 0.0,  dividend_yield: 0.0 }
     ]
   end
 
