@@ -16,6 +16,10 @@ Rails.application.routes.draw do
 
   resources :user_assets
   resources :user_liabilities
+
+  # Budget / cashflow allocator
+  get "budget", to: "budget#index", as: :budget
+  resources :budget_items, only: [:create, :update, :destroy]
   
   # AI Assistant routes
   get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant

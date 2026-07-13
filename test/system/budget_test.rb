@@ -1,0 +1,39 @@
+require "application_system_test_case"
+
+class BudgetTest < ApplicationSystemTestCase
+  setup do
+    @user = User.create!(email: "system@example.com", password: "password123")
+    @user.confirm!
+  end
+
+  def login
+    visit login_url
+    fill_in "user[email]", with: @user.email
+    fill_in "user[password]", with: "password123"
+    click_button "Sign In"
+    assert_text "Welcome back"
+  end
+
+  test "deleting a budget row via the styled confirm dialog" do
+    login
+    visit budget_url
+    assert_selector "tr", text: "Rates"
+
+    row = find("tr", text: "Rates", match: :first)
+    row.find("button", text: "✕").click
+
+    within("dialog") { click_button "Confirm" }
+
+    assert_no_selector "tr", text: "Rates"
+    assert_not @user.budget_items.exists?(name: "Rates")
+  end
+
+  test "editing an amount recalculates totals in place" do
+    login
+    visit budget_url
+    field = find_by_id("amount_budget_item_#{@user.budget_items.find_by!(name: "Rent").id}")
+    field.fill_in with: "335"
+    field.send_keys :tab
+    assert_text "1,451.67"
+  end
+end
