@@ -59,4 +59,21 @@ liabilities.each do |attrs|
   end
 end
 
+# Give the ETF portfolio a monthly history of contributions and marks so the
+# performance chart has something to show. Only runs when it has no history.
+etf = demo.user_assets.find_by(item_name: "ETF portfolio")
+if etf && etf.asset_valuations.none?
+  value = etf.purchase_price_cents
+  6.downto(1) do |months_ago|
+    date = [Date.today << months_ago, etf.purchase_date + 1].max
+    if months_ago.even?
+      amount = rand(50..200) * 1_000
+      etf.asset_contributions.find_or_create_by!(occurred_on: date, amount_cents: amount)
+      value += amount
+    end
+    value = (value * rand(0.97..1.06)).round
+    etf.asset_valuations.find_or_create_by!(valued_on: date) { |v| v.value_cents = value }
+  end
+end
+
 puts "Seeded: #{User.count} users, #{UserAsset.count} assets, #{UserLiability.count} liabilities"

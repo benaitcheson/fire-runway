@@ -1,0 +1,105 @@
+<div class="mt-8 bg-white rounded-lg shadow-md overflow-hidden">
+  <div class="p-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Performance</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+      <div>
+        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Money in</h3>
+        <p class="text-xl font-bold text-blue-600"><%= format_currency(asset.cost_basis_cents, asset.purchase_price_currency) %></p>
+      </div>
+      <div>
+        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Current value</h3>
+        <p class="text-xl font-bold text-gray-900"><%= format_currency(asset.current_value_cents, asset.purchase_price_currency) %></p>
+      </div>
+      <div>
+        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Gain / loss</h3>
+        <p class="text-xl font-bold <%= asset.gain_cents.negative? ? 'text-red-600' : 'text-green-600' %>">
+          <%= format_currency(asset.gain_cents, asset.purchase_price_currency) %>
+        </p>
+      </div>
+      <div>
+        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Return p.a.</h3>
+        <% rate = asset.money_weighted_return %>
+        <% if rate %>
+          <p class="text-xl font-bold <%= rate.negative? ? 'text-red-600' : 'text-green-600' %>"><%= (rate * 100).round(1) %>%</p>
+          <p class="text-xs text-gray-500">money-weighted</p>
+        <% else %>
+          <p class="text-xl font-bold text-gray-400">—</p>
+          <p class="text-xs text-gray-500">needs more history</p>
+        <% end %>
+      </div>
+    </div>
+
+    <% timeline = asset.performance_timeline %>
+    <% if timeline[:value] && timeline[:value].size > 1 %>
+      <%= line_chart [
+            { name: "Money in", data: timeline[:basis] },
+            { name: "Value", data: timeline[:value] }
+          ],
+          height: "280px", prefix: "$", thousands: ",",
+          colors: ["#94a3b8", "#10b981"], curve: false %>
+    <% end %>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+      <div>
+        <h3 class="font-semibold text-gray-700 mb-2">Record a valuation</h3>
+        <p class="text-sm text-gray-500 mb-3">What is it worth right now (or on a past date)?</p>
+        <%= form_with model: [asset, AssetValuation.new], class: "flex flex-wrap items-end gap-2" do |form| %>
+          <%= form.date_field :valued_on, value: Date.today, max: Date.today,
+                class: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" %>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 text-sm">$</span>
+            <%= form.number_field :value, step: 0.01, min: 0, placeholder: "0.00", required: true,
+                  class: "w-32 pl-6 pr-2 py-1.5 border border-gray-300 rounded-md text-sm text-right" %>
+          </div>
+          <%= form.submit "Save", class: "bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-1.5 px-3 rounded cursor-pointer" %>
+        <% end %>
+
+        <ul class="mt-4 divide-y divide-gray-100 text-sm">
+          <% asset.asset_valuations.chronological.reverse_each do |valuation| %>
+            <li class="py-1.5 flex justify-between items-center">
+              <span class="text-gray-500"><%= format_date(valuation.valued_on) %></span>
+              <span class="flex items-center gap-2">
+                <span class="font-medium"><%= format_currency(valuation.value_cents, asset.purchase_price_currency) %></span>
+                <%= button_to "✕", user_asset_asset_valuation_path(asset, valuation), method: :delete,
+                      data: { turbo_confirm: "Remove this valuation?" },
+                      class: "text-gray-400 hover:text-red-600 text-xs" %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-semibold text-gray-700 mb-2">Record a contribution</h3>
+        <p class="text-sm text-gray-500 mb-3">Money you added (negative for a withdrawal).</p>
+        <%= form_with model: [asset, AssetContribution.new], class: "flex flex-wrap items-end gap-2" do |form| %>
+          <%= form.date_field :occurred_on, value: Date.today, max: Date.today,
+                class: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" %>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 text-sm">$</span>
+            <%= form.number_field :amount, step: 0.01, placeholder: "0.00", required: true,
+                  class: "w-32 pl-6 pr-2 py-1.5 border border-gray-300 rounded-md text-sm text-right" %>
+          </div>
+          <%= form.submit "Save", class: "bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-1.5 px-3 rounded cursor-pointer" %>
+        <% end %>
+
+        <ul class="mt-4 divide-y divide-gray-100 text-sm">
+          <% asset.asset_contributions.chronological.reverse_each do |contribution| %>
+            <li class="py-1.5 flex justify-between items-center">
+              <span class="text-gray-500"><%= format_date(contribution.occurred_on) %></span>
+              <span class="flex items-center gap-2">
+                <span class="font-medium <%= contribution.amount_cents.negative? ? 'text-red-600' : '' %>">
+                  <%= format_currency(contribution.amount_cents, asset.purchase_price_currency) %>
+                </span>
+                <%= button_to "✕", user_asset_asset_contribution_path(asset, contribution), method: :delete,
+                      data: { turbo_confirm: "Remove this contribution?" },
+                      class: "text-gray-400 hover:text-red-600 text-xs" %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

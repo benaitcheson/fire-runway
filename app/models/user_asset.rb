@@ -18,7 +18,9 @@
 
 class UserAsset < ApplicationRecord
   belongs_to :user
-  
+  has_many :asset_contributions, dependent: :destroy
+  has_many :asset_valuations, dependent: :destroy
+
   DEPRECIATION_METHODS = {
     'none' => 'No Depreciation',
     'straight_line' => 'Straight Line',
@@ -37,10 +39,78 @@ class UserAsset < ApplicationRecord
   validate :depreciation_fields_presence
   validate :salvage_value_less_than_purchase_price
   
+  # A market asset (shares, cash, super) is valued by marks-to-market rather
+  # than a depreciation curve.
+  def market_asset?
+    depreciation_method == 'none'
+  end
+
+  # Everything paid in up to a date: the original purchase plus contributions.
+  def cost_basis_cents(date = Date.today)
+    purchase_price_cents +
+      asset_contributions.to_a.select { |c| c.occurred_on <= date }.sum(&:amount_cents)
+  end
+
+  # Value on a date. Market assets: the latest valuation on/before that date,
+  # plus any contributions made after it (new money holds face value until the
+  # next mark); with no valuations yet, cost basis. Depreciating assets: the
+  # depreciation curve.
+  def value_at(date)
+    return 0 if purchase_date.nil? || date < purchase_date
+
+    unless market_asset?
+      return current_value_at_year((date - purchase_date).to_f / 365.25)
+    end
+
+    mark = asset_valuations.to_a.select { |v| v.valued_on <= date }.max_by(&:valued_on)
+    if mark
+      later_contributions = asset_contributions.to_a
+        .select { |c| c.occurred_on > mark.valued_on && c.occurred_on <= date }
+        .sum(&:amount_cents)
+      mark.value_cents + later_contributions
+    else
+      cost_basis_cents(date)
+    end
+  end
+
+  def gain_cents
+    current_value_cents - cost_basis_cents
+  end
+
+  # Money-weighted annualised return across purchase, contributions and the
+  # current value. nil when it can't be meaningfully computed.
+  def money_weighted_return
+    return nil unless market_asset? && purchase_date.present?
+
+    cashflows = [[purchase_date, -purchase_price_cents]]
+    asset_contributions.each { |c| cashflows << [c.occurred_on, -c.amount_cents] }
+    cashflows << [Date.today, current_value_cents]
+
+    AssetPerformance::Xirr.new(cashflows).call
+  end
+
+  # Monthly series of money-in vs value from purchase to today, for charting.
+  def performance_timeline
+    return {} unless market_asset? && purchase_date.present?
+
+    dates = []
+    date = purchase_date
+    while date <= Date.today
+      dates << date
+      date = date.next_month.beginning_of_month
+    end
+    dates << Date.today unless dates.last == Date.today
+
+    {
+      basis: dates.index_with { |d| (cost_basis_cents(d) / 100.0).round(2) },
+      value: dates.index_with { |d| (value_at(d) / 100.0).round(2) }
+    }
+  end
+
   # Calculate current depreciated value
   def current_value_cents
-    return purchase_price_cents if depreciation_method == 'none'
-    
+    return value_at(Date.today) if depreciation_method == 'none'
+
     years_owned = calculate_years_owned
     return purchase_price_cents if years_owned <= 0
     

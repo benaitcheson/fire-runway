@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_15_212448) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_15_214804) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_212448) do
     t.bigint "user_id", null: false
     t.index ["user_id", "created_at"], name: "index_ai_messages_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_ai_messages_on_user_id"
+  end
+
+  create_table "asset_contributions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.date "occurred_on", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_asset_id", null: false
+    t.index ["user_asset_id", "occurred_on"], name: "index_asset_contributions_on_user_asset_id_and_occurred_on"
+    t.index ["user_asset_id"], name: "index_asset_contributions_on_user_asset_id"
+  end
+
+  create_table "asset_valuations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_asset_id", null: false
+    t.integer "value_cents", null: false
+    t.date "valued_on", null: false
+    t.index ["user_asset_id", "valued_on"], name: "index_asset_valuations_on_user_asset_id_and_valued_on", unique: true
+    t.index ["user_asset_id"], name: "index_asset_valuations_on_user_asset_id"
   end
 
   create_table "budget_items", force: :cascade do |t|
@@ -74,6 +94,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_212448) do
   end
 
   add_foreign_key "ai_messages", "users"
+  add_foreign_key "asset_contributions", "user_assets"
+  add_foreign_key "asset_valuations", "user_assets"
   add_foreign_key "budget_items", "users"
   add_foreign_key "user_assets", "users"
   add_foreign_key "user_liabilities", "users"

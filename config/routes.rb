@@ -14,7 +14,10 @@ Rails.application.routes.draw do
   post "login", to: "sessions#create"
   delete "logout", to: "sessions#destroy", as: :logout
 
-  resources :user_assets
+  resources :user_assets do
+    resources :asset_contributions, only: [:create, :destroy]
+    resources :asset_valuations, only: [:create, :destroy]
+  end
   resources :user_liabilities
 
   # Budget / cashflow allocator

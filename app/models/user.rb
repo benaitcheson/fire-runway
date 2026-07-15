@@ -49,16 +49,12 @@ class User < ApplicationRecord
   # Total value of all assets at each month from the first purchase to today,
   # using each asset's depreciation curve. Suitable for chartkick.
   def asset_value_timeline
-    assets = user_assets.where.not(purchase_date: nil).to_a
+    assets = user_assets.where.not(purchase_date: nil)
+                        .includes(:asset_valuations, :asset_contributions).to_a
     return {} if assets.empty?
 
     monthly_timeline(assets.map(&:purchase_date).min) do |date|
-      assets.sum do |asset|
-        next 0 if date < asset.purchase_date
-
-        years_owned = (date - asset.purchase_date).to_f / 365.25
-        asset.current_value_at_year(years_owned)
-      end
+      assets.sum { |asset| asset.value_at(date) }
     end
   end
 
