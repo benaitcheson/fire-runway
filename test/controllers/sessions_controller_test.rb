@@ -16,6 +16,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  test "failed login shows the error to the user" do
+    post login_url, params: { user: { email: users(:one).email, password: "wrong-password" } }
+    assert_match "Incorrect email or password", response.body
+  end
+
   test "rejects unknown email" do
     post login_url, params: { user: { email: "nobody@example.com", password: "password123" } }
     assert_response :unprocessable_entity

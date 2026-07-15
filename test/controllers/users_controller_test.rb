@@ -23,4 +23,11 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :unprocessable_entity
   end
+
+  test "failed sign up shows validation errors to the user" do
+    post sign_up_url, params: { user: {
+      email: "new@example.com", password: "password123", password_confirmation: "different"
+    } }
+    assert_match "Password confirmation doesn&#39;t match", response.body
+  end
 end
