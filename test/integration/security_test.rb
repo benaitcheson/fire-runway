@@ -197,6 +197,30 @@ class SecurityTest < ActionDispatch::IntegrationTest
     assert_not unconfirmed.reload.confirmed?
   end
 
+  # --- Rate limiting ----------------------------------------------------------
+
+  test "login attempts are rate limited per IP" do
+    10.times do
+      post login_url, params: { user: { email: @user.email, password: "wrong" } }
+      assert_response :unprocessable_entity
+    end
+
+    post login_url, params: { user: { email: @user.email, password: "wrong" } }
+    assert_response :too_many_requests
+  end
+
+  test "rate limit blocks even correct credentials once tripped" do
+    10.times { post login_url, params: { user: { email: @user.email, password: "wrong" } } }
+
+    post login_url, params: { user: { email: @user.email, password: "password123" } }
+    assert_response :too_many_requests
+  end
+
+  test "login page itself is not rate limited" do
+    15.times { get login_url }
+    assert_response :success
+  end
+
   # --- Session lifecycle ------------------------------------------------------
 
   test "logout ends the session for subsequent requests" do

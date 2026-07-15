@@ -10,6 +10,10 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # Rate limit counters live in the cache; reset them so the suite's many
+    # logins don't trip the limiter across tests.
+    setup { Rails.cache.clear }
+
     # Add more helper methods to be used by all tests here...
   end
 end
