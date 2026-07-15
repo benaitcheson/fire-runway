@@ -19,6 +19,7 @@ class User < ApplicationRecord
   has_many :user_assets, dependent: :destroy
   has_many :user_liabilities, dependent: :destroy
   has_many :budget_items, dependent: :destroy
+  has_many :ai_messages, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true
   validates_format_of :email, with: URI::MailTo::EMAIL_REGEXP

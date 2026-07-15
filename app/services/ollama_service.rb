@@ -69,7 +69,7 @@ class OllamaService
     Rails.logger.info "Ollama response: #{response.inspect}"
     
     if response.is_a?(Array)
-      response.map { |r| r['response'] }.join('')
+      response.map { |r| r['response'] || r.dig('message', 'content') }.join('')
     elsif response.is_a?(Hash)
       response['response'] || response.dig('message', 'content') || response
     else

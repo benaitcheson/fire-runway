@@ -1,6 +1,25 @@
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-6">AI Assistant (Ollama)</h1>
   
+  <% if @messages.present? %>
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Conversation</h2>
+        <%= button_to "Clear history", ai_assistant_history_path, method: :delete,
+              data: { turbo_confirm: "Clear the whole conversation?" },
+              class: "text-sm text-red-600 hover:text-red-800" %>
+      </div>
+      <div class="space-y-3">
+        <% @messages.each do |message| %>
+          <div class="p-3 rounded-md <%= message.role == 'user' ? 'bg-blue-50' : 'bg-gray-100' %>">
+            <div class="text-xs font-semibold text-gray-500 mb-1"><%= message.role == 'user' ? 'You' : 'Assistant' %></div>
+            <div class="whitespace-pre-wrap text-sm"><%= message.content %></div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="bg-white rounded-lg shadow-md p-6" data-controller="ai-chat">
     <form data-action="submit->ai-chat#submit" class="space-y-4">
       <div>

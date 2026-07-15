@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_201315) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_15_204432) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "ai_messages", force: :cascade do |t|
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.string "role", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "created_at"], name: "index_ai_messages_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_ai_messages_on_user_id"
+  end
 
   create_table "budget_items", force: :cascade do |t|
     t.integer "amount_cents", default: 0, null: false
@@ -61,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_201315) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "ai_messages", "users"
   add_foreign_key "budget_items", "users"
   add_foreign_key "user_assets", "users"
   add_foreign_key "user_liabilities", "users"

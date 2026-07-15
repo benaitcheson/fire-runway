@@ -3,6 +3,12 @@ class AiAssistantController < ApplicationController
 
   def index
     @models = @ollama.list_models
+    @messages = current_user.ai_messages.chronological.last(20)
+  end
+
+  def clear_history
+    current_user.ai_messages.destroy_all
+    redirect_to ai_assistant_path, notice: "Conversation cleared."
   end
 
   def chat
