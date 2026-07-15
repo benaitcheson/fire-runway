@@ -5,7 +5,7 @@ class OllamaService
 
   def initialize
     @client = Ollama.new(
-      credentials: { address: 'http://localhost:11434' },
+      credentials: { address: ENV.fetch('OLLAMA_URL', 'http://localhost:11434') },
       options: { server_sent_events: true }
     )
   end
@@ -36,7 +36,7 @@ class OllamaService
   # and optionally "tool_calls") rather than flattened text.
   def chat_with_tools(messages:, tools:, model: 'llama3.2:latest')
     client = Ollama.new(
-      credentials: { address: 'http://localhost:11434' },
+      credentials: { address: ENV.fetch('OLLAMA_URL', 'http://localhost:11434') },
       options: { server_sent_events: false }
     )
     response = client.chat(
