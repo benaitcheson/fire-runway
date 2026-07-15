@@ -41,11 +41,8 @@ class InvestmentComparisonController < ApplicationController
   end
 
   def monthly_surplus
-    income = budget_yearly_cents("income")
-    return nil if income.zero?
-
-    surplus = income - budget_yearly_cents("bills") - budget_yearly_cents("everyday")
-    surplus.positive? ? (surplus / 12.0 / 100.0).round(-2) : nil
+    cents = current_user.monthly_budget_surplus_cents
+    cents&.positive? ? (cents / 100.0).round(-2) : nil
   end
 
   # Budget income is net; approximate gross using a ~30% effective tax rate.

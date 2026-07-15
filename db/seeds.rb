@@ -41,14 +41,21 @@ assets.each do |attrs|
 end
 
 liabilities = [
-  { item_name: "HECS debt", amount_cents: dollars.(10_000, 60_000) },
-  { item_name: "Credit card", amount_cents: dollars.(500, 8_000) },
-  { item_name: "Car loan", amount_cents: dollars.(3_000, 25_000) }
+  { item_name: "HECS debt", amount_cents: dollars.(10_000, 60_000),
+    interest_rate: rand(2.0..5.0).round(1), minimum_monthly_payment_cents: 0 },
+  { item_name: "Credit card", amount_cents: dollars.(500, 8_000),
+    interest_rate: rand(17.0..22.0).round(1), minimum_monthly_payment_cents: dollars.(25, 100) },
+  { item_name: "Car loan", amount_cents: dollars.(3_000, 25_000),
+    interest_rate: rand(6.0..10.0).round(1), minimum_monthly_payment_cents: dollars.(150, 400) }
 ]
 
 liabilities.each do |attrs|
-  demo.user_liabilities.find_or_create_by!(item_name: attrs[:item_name]) do |liability|
-    liability.assign_attributes(amount_currency: "AUD", **attrs)
+  liability = demo.user_liabilities.find_or_create_by!(item_name: attrs[:item_name]) do |l|
+    l.assign_attributes(amount_currency: "AUD", **attrs)
+  end
+  # Backfill payoff fields on rows created before those columns existed.
+  if liability.interest_rate.zero? && attrs[:interest_rate].positive?
+    liability.update!(attrs.slice(:interest_rate, :minimum_monthly_payment_cents))
   end
 end
 

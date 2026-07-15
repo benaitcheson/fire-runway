@@ -56,6 +56,7 @@ class UserLiabilitiesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def user_liability_params
-    params.require(:user_liability).permit(:item_name, :amount_cents, :amount_currency)
+    params.require(:user_liability).permit(:item_name, :amount_cents, :amount_currency,
+                                           :interest_rate, :minimum_monthly_payment)
   end
 end

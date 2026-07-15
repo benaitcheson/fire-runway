@@ -26,6 +26,9 @@ Rails.application.routes.draw do
   post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat
   delete "ai_assistant/history", to: "ai_assistant#clear_history", as: :ai_assistant_history
 
+  # Debt payoff planner
+  get "payoff_planner", to: "payoff_planner#index", as: :payoff_planner
+
   # Investment Comparison
   get "investment_comparison", to: "investment_comparison#index", as: :investment_comparison
   post "investment_comparison/calculate", to: "investment_comparison#calculate", as: :investment_comparison_calculate

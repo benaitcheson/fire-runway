@@ -52,7 +52,9 @@ module Ai
 
     def list_liabilities(_args = {})
       liabilities = @user.user_liabilities.map do |liability|
-        { name: liability.item_name, amount: dollars(liability.amount_cents) }
+        { name: liability.item_name, amount: dollars(liability.amount_cents),
+          interest_rate_percent: liability.interest_rate.to_f,
+          minimum_monthly_payment: dollars(liability.minimum_monthly_payment_cents) }
       end
       { liabilities: liabilities }
     end

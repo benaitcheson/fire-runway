@@ -62,6 +62,16 @@ class User < ApplicationRecord
     end
   end
 
+  # Budget surplus per month in cents (income minus bills minus everyday),
+  # or nil when there is no budget income recorded.
+  def monthly_budget_surplus_cents
+    income = budget_items.in_section("income").sum(&:yearly_cents)
+    return nil if income.zero?
+
+    expenses = budget_items.where(section: %w[bills everyday]).sum(&:yearly_cents)
+    ((income - expenses) / 12.0).round
+  end
+
   # Cumulative liabilities at each month, dated by when each was added.
   def liability_timeline
     liabilities = user_liabilities.to_a
