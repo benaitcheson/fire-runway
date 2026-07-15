@@ -10,8 +10,22 @@ class BudgetTest < ApplicationSystemTestCase
     visit login_url
     fill_in "user[email]", with: @user.email
     fill_in "user[password]", with: "password123"
-    click_button "Sign In"
+    click_button "Sign in"
     assert_text "Welcome back"
+  end
+
+  test "show password toggle reveals and re-hides the password" do
+    visit login_url
+    fill_in "user[password]", with: "secret123"
+
+    field = find_field("user[password]")
+    assert_equal "password", field[:type]
+
+    click_button "Show"
+    assert_equal "text", field[:type]
+
+    click_button "Hide"
+    assert_equal "password", field[:type]
   end
 
   test "deleting a budget row via the styled confirm dialog" do

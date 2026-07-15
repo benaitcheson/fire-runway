@@ -11,10 +11,10 @@
         <li><%= link_to 'Budget', budget_path, class: "text-white hover:text-gray-400" %></li>
         <li><%= link_to 'AI Assistant', ai_assistant_path, class: "text-white hover:text-gray-400" %></li>
         <li><%= link_to 'Compare', investment_comparison_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Log out', logout_path, data: { turbo_method: :delete }, class: "text-white hover:text-gray-400" %></li>
+        <li><%= link_to 'Sign out', logout_path, data: { turbo_method: :delete }, class: "text-white hover:text-gray-400" %></li>
       <% else %>
         <li><%= link_to 'Sign up', sign_up_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Login', login_path, class: "text-white hover:text-gray-400" %></li>
+        <li><%= link_to 'Sign in', login_path, class: "text-white hover:text-gray-400" %></li>
       <% end %>
     </ul>
   </div>
