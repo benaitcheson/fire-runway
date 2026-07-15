@@ -1,20 +1,25 @@
-<nav class="bg-gray-800 p-4">
-  <div class="container mx-auto flex justify-between items-center">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-white text-gray-900 px-4 py-2 rounded-md shadow">Skip to main content</a>
+
+<nav class="bg-gray-800 p-4" aria-label="Primary">
+  <div class="container mx-auto flex flex-wrap justify-between items-center gap-y-2">
     <div class="text-white text-lg font-bold">
-      <%= link_to 'MyFinance', root_path, class: "hover:text-gray-400" %>
+      <%= link_to 'FireRunway', root_path, class: "hover:text-gray-300" %>
     </div>
-    <ul class="flex space-x-4">
+    <ul class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <% if user_signed_in? %>
-        <li><%= link_to 'Dashboard', dashboard_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Assets', user_assets_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Liabilities', user_liabilities_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Budget', budget_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'AI Assistant', ai_assistant_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Compare', investment_comparison_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Sign out', logout_path, data: { turbo_method: :delete }, class: "text-white hover:text-gray-400" %></li>
+        <li><%= nav_link_to 'Dashboard', dashboard_path %></li>
+        <li><%= nav_link_to 'Assets', user_assets_path %></li>
+        <li><%= nav_link_to 'Liabilities', user_liabilities_path %></li>
+        <li><%= nav_link_to 'Budget', budget_path %></li>
+        <li><%= nav_link_to 'AI Assistant', ai_assistant_path %></li>
+        <li><%= nav_link_to 'Compare', investment_comparison_path %></li>
+        <li>
+          <%= button_to 'Sign out', logout_path, method: :delete,
+                class: "text-gray-300 hover:text-white cursor-pointer" %>
+        </li>
       <% else %>
-        <li><%= link_to 'Sign up', sign_up_path, class: "text-white hover:text-gray-400" %></li>
-        <li><%= link_to 'Sign in', login_path, class: "text-white hover:text-gray-400" %></li>
+        <li><%= nav_link_to 'Sign up', sign_up_path %></li>
+        <li><%= nav_link_to 'Sign in', login_path %></li>
       <% end %>
     </ul>
   </div>
