@@ -3,7 +3,7 @@
 # Sourced from .ruby-version — build with:
 #   docker build --build-arg RUBY_VERSION=$(cat .ruby-version) .
 ARG RUBY_VERSION=4.0.5
-FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
+FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
 WORKDIR /rails
@@ -16,7 +16,7 @@ ENV RAILS_ENV="production" \
 
 
 # Throw-away build stage to reduce size of final image
-FROM base as build
+FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
@@ -39,7 +39,7 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
 # Final stage for app image
-FROM base
+FROM base AS final
 
 # Install packages needed for deployment
 RUN apt-get update -qq && \
