@@ -1,0 +1,96 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2">Runway</h1>
+  <p class="text-gray-600 mb-6">If the income stopped today, how long would your money last?</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Liquid assets</h3>
+      <p class="text-2xl font-bold text-green-600"><%= format_currency(@liquid_assets_cents, "AUD") %></p>
+      <% if @other_assets_cents.positive? %>
+        <p class="text-xs text-gray-500 mt-1">+ <%= format_currency(@other_assets_cents, "AUD") %> in depreciating assets, not counted</p>
+      <% end %>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Liabilities</h3>
+      <p class="text-2xl font-bold text-red-600">&minus;<%= format_currency(@liabilities_cents, "AUD") %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Spendable pool</h3>
+      <p class="text-2xl font-bold <%= @pool_cents.positive? ? "text-gray-900" : "text-red-600" %>"><%= format_currency(@pool_cents, "AUD") %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Monthly spend (from budget)</h3>
+      <p class="text-2xl font-bold text-gray-900"><%= format_currency(@budget_monthly_spend_cents, "AUD") %></p>
+      <p class="text-xs text-gray-500 mt-1"><%= link_to "Edit your budget", budget_path, class: "text-blue-600 hover:underline" %></p>
+    </div>
+  </div>
+
+  <%= form_with url: runway_path, method: :get, class: "bg-white rounded-lg shadow-md p-6 mb-6 flex flex-wrap items-end gap-4" do |form| %>
+    <div>
+      <%= form.label :monthly_spend, "Monthly spend", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <p class="text-xs text-gray-500 mb-1">Defaults to bills + everyday from your budget</p>
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+        <%= form.number_field :monthly_spend, value: @monthly_spend, step: 10, min: 0,
+              class: "w-40 pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+      </div>
+    </div>
+    <div>
+      <%= form.label :annual_growth, "Return on remaining money", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <p class="text-xs text-gray-500 mb-1">0% is the cautious default</p>
+      <div class="relative">
+        <%= form.number_field :annual_growth, value: @annual_growth, step: 0.1, min: 0,
+              class: "w-40 pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+        <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+      </div>
+    </div>
+    <%= form.submit "Recalculate", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+  <% end %>
+
+  <% if @monthly_spend <= 0 %>
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+      <p class="text-gray-500 mb-4">We need a monthly spend to burn down. Fill in the bills and everyday sections of your budget, or type an amount above.</p>
+      <%= link_to "Set up your budget", budget_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  <% elsif @pool_cents <= 0 %>
+    <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg mb-1">No runway yet</h2>
+      <p>Your liabilities are <%= @liquid_assets_cents.positive? ? "bigger than" : "not covered by" %> your liquid assets,
+      so there's no spendable pool to run down. The <%= link_to "payoff planner", payoff_planner_path, class: "underline" %>
+      is the place to start.</p>
+    </div>
+  <% else %>
+    <div class="<%= @result.indefinite ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200" %> border rounded-lg p-6 mb-6">
+      <% if @result.indefinite %>
+        <h2 class="font-bold text-lg text-green-900 mb-1">Your money outlasts the horizon</h2>
+        <p class="text-green-900">At <%= format_currency((@monthly_spend * 100).round, "AUD") %>/month with
+        <%= @annual_growth %>% returns, growth covers your spending — the pool never runs dry. That's the FIRE line.</p>
+      <% else %>
+        <h2 class="font-bold text-lg text-blue-900 mb-1">
+          Your money would last <%= @result.in_words %>
+        </h2>
+        <p class="text-blue-900">Spending <%= format_currency((@monthly_spend * 100).round, "AUD") %>/month
+        with <%= @annual_growth %>% returns on what's left, the pool runs out around
+        <strong><%= @result.depletion_date.strftime("%B %Y") %></strong>.</p>
+      <% end %>
+      <% if @monthly_surplus_cents&.positive? %>
+        <p class="mt-2 text-sm text-gray-600">While you're still earning you're adding
+        <%= format_currency(@monthly_surplus_cents, "AUD") %>/month, so the runway above only starts
+        counting if that income stops.</p>
+      <% end %>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Money remaining</h3>
+      <%= line_chart @chart_data,
+          height: "300px",
+          prefix: "$",
+          thousands: ",",
+          colors: ["#3b82f6"],
+          curve: false %>
+      <% if @result.indefinite || @result.months > Runway::Simulator::CHART_MONTHS %>
+        <p class="text-xs text-gray-500 mt-2">Chart shows the first <%= Runway::Simulator::CHART_MONTHS / 12 %> years.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

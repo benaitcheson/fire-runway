@@ -29,6 +29,9 @@ Rails.application.routes.draw do
   post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat
   delete "ai_assistant/history", to: "ai_assistant#clear_history", as: :ai_assistant_history
 
+  # FIRE runway — how long the money lasts
+  get "runway", to: "runway#index", as: :runway
+
   # Debt payoff planner
   get "payoff_planner", to: "payoff_planner#index", as: :payoff_planner
 
