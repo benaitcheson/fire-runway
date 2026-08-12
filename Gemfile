@@ -8,8 +8,8 @@ gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.6"
 
-# Use the Puma web server [https://github.com/puma/puma]
-gem "puma", "~> 8.0"
+# Use the Raptor web server [https://github.com/joshuay03/raptor]
+gem "raptor"
 
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem "importmap-rails"
@@ -52,10 +52,4 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-end
-
-group :test do
-  # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
-  gem "capybara"
-  gem "selenium-webdriver"
 end

@@ -1,2 +1,2 @@
-web: bin/rails server
+web: bin/rails server -u raptor
 css: bin/rails tailwindcss:watch
