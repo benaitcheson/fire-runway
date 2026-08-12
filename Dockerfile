@@ -2,7 +2,7 @@
 
 # Sourced from .ruby-version — build with:
 #   docker build --build-arg RUBY_VERSION=$(cat .ruby-version) .
-ARG RUBY_VERSION=4.0.5
+ARG RUBY_VERSION=4.0.6
 FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
