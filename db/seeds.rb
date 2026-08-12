@@ -76,4 +76,41 @@ if etf && etf.asset_valuations.none?
   end
 end
 
-puts "Seeded: #{User.count} users, #{UserAsset.count} assets, #{UserLiability.count} liabilities"
+# Budget: create the standard template rows, then fill a plausible household's
+# worth of amounts. Only randomises once — a budget with any non-zero amounts
+# is left alone.
+BudgetItem.bootstrap_for(demo)
+if demo.budget_items.where("amount_cents > 0").none?
+  budget_amounts = {
+    "income" => {
+      "Income 1 (Post Tax)" => ["fortnightly", dollars.(2_800, 4_200)]
+    },
+    "bills" => {
+      "Rent"                     => ["monthly", dollars.(1_800, 2_800)],
+      "Electricity"              => ["quarterly", dollars.(250, 450)],
+      "Gas"                      => ["quarterly", dollars.(120, 250)],
+      "Internet"                 => ["monthly", dollars.(70, 110)],
+      "Mobile phone/s"           => ["monthly", dollars.(30, 60)],
+      "Car & Vehicle Insurances" => ["annually", dollars.(800, 1_600)],
+      "Private Health Insurance" => ["monthly", dollars.(120, 250)],
+      "Gym"                      => ["weekly", dollars.(15, 35)]
+    },
+    "everyday" => {
+      "Groceries"                    => ["weekly", dollars.(120, 250)],
+      "Petrol"                       => ["weekly", dollars.(40, 90)],
+      "Restaurants & Take Aways"     => ["weekly", dollars.(40, 120)],
+      "Movies, concerts, bars etc."  => ["monthly", dollars.(50, 150)],
+      "Clothes & Shoes"              => ["monthly", dollars.(80, 200)]
+    }
+  }
+
+  budget_amounts.each do |section, items|
+    items.each do |name, (frequency, amount_cents)|
+      demo.budget_items.find_by(section: section, name: name)
+          &.update!(frequency: frequency, amount_cents: amount_cents)
+    end
+  end
+end
+
+puts "Seeded: #{User.count} users, #{UserAsset.count} assets, #{UserLiability.count} liabilities, " \
+     "#{demo.budget_items.where("amount_cents > 0").count} filled budget items"
