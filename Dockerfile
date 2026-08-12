@@ -41,6 +41,13 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base AS final
 
+# Build metadata surfaced at /app_info — pass at build time:
+#   docker build --build-arg GIT_SHA=$(git rev-parse --short HEAD) --build-arg BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ) .
+ARG GIT_SHA
+ARG BUILT_AT
+ENV GIT_SHA=$GIT_SHA \
+    BUILT_AT=$BUILT_AT
+
 # Install packages needed for deployment
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libpq5 libvips && \

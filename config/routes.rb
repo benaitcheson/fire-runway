@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   get "up", to: "rails/health#show", as: :rails_health_check
 
   root "dashboard#index"
+  get "app_info", to: "app_info#show", as: :app_info
   get 'dashboard/index', to: 'dashboard#index', as: :dashboard
 
   # user sign up
