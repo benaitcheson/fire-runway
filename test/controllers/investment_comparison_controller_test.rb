@@ -26,6 +26,18 @@ class InvestmentComparisonControllerTest < ActionDispatch::IntegrationTest
     assert_match(/name="monthly_savings"\s+value="5000"/m, response.body)
     # $84k net grossed up by 0.7 = $120k
     assert_match(/name="salary"\s+value="120000"/m, response.body)
+    # $120k sits in the 30% bracket, plus 2% Medicare levy
+    assert_match(/name="tax_rate"\s+value="32.0"/m, response.body)
+    assert_match "Pre-filled from your data", response.body
+  end
+
+  test "defaults the mortgage rate from an entered home loan" do
+    @user.user_liabilities.create!(item_name: "Home mortgage", amount_cents: 40_000_000,
+                                   amount_currency: "AUD", interest_rate: 5.9)
+
+    get investment_comparison_url
+    assert_response :success
+    assert_match(/name="property_interest_rate"\s+value="5.9"/m, response.body)
   end
 
   test "renders with randomised fallbacks when user has no data" do

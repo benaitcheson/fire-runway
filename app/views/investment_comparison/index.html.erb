@@ -2,6 +2,15 @@
   <div class="mb-8">
     <h1 class="text-3xl font-bold mb-2">Investment Comparison</h1>
     <p class="text-gray-600">Compare investment property vs leveraged shares vs a hybrid approach</p>
+    <% if @prefilled.present? %>
+      <% labels = { initial_capital: "initial capital (your investable assets)",
+                    monthly_savings: "monthly savings (your budget surplus)",
+                    salary: "salary (from budget income)",
+                    tax_rate: "tax rate (bracket for that salary)",
+                    property_interest_rate: "mortgage rate (from your liabilities)" } %>
+      <p class="text-sm text-gray-500 mt-1">Pre-filled from your data:
+        <%= @prefilled.map { |key| labels[key] }.compact.join(", ") %> — the rest are guesses, adjust anything.</p>
+    <% end %>
   </div>
 
   <!-- Input Form -->

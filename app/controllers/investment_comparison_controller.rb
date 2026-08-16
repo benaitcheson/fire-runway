@@ -1,6 +1,8 @@
 class InvestmentComparisonController < ApplicationController
   def index
-    @params = default_params
+    from_user = user_defaults.compact
+    @prefilled = from_user.keys
+    @params = random_defaults.merge(from_user)
     @results = InvestmentComparison::Calculator.new(@params).call
   end
 
@@ -16,17 +18,13 @@ class InvestmentComparisonController < ApplicationController
 
   private
 
-  # Pre-fill the form from the user's actual assets and budget where present,
-  # falling back to randomised plausible values. Nothing is persisted.
-  def default_params
-    random_defaults.merge(user_defaults.compact)
-  end
-
   def user_defaults
     {
       initial_capital: investable_capital,
       monthly_savings: monthly_surplus,
-      salary: estimated_gross_salary
+      salary: estimated_gross_salary,
+      tax_rate: marginal_tax_rate,
+      property_interest_rate: mortgage_rate
     }
   end
 
@@ -53,6 +51,32 @@ class InvestmentComparisonController < ApplicationController
 
   def budget_yearly_cents(section)
     current_user.budget_items.in_section(section).sum(&:yearly_cents)
+  end
+
+  # Australian resident marginal bracket for the estimated salary, plus the
+  # 2% Medicare levy. Nil below the tax-free threshold (form default applies).
+  def marginal_tax_rate
+    gross = estimated_gross_salary
+    return nil unless gross
+
+    bracket =
+      case gross
+      when 0...18_200 then nil
+      when 18_200...45_000 then 16.0
+      when 45_000...135_000 then 30.0
+      when 135_000...190_000 then 37.0
+      else 45.0
+      end
+    bracket && bracket + 2.0
+  end
+
+  # Rate from the largest entered mortgage/home-loan liability, if any.
+  def mortgage_rate
+    current_user.user_liabilities
+      .where("item_name ~* ?", "mortgage|home loan")
+      .where("interest_rate > 0")
+      .order(amount_cents: :desc)
+      .first&.interest_rate&.to_f&.round(1)
   end
 
   def random_defaults
