@@ -24,6 +24,10 @@ Rails.application.routes.draw do
   # Budget / cashflow allocator
   get "budget", to: "budget#index", as: :budget
   resources :budget_items, only: [:create, :update, :destroy]
+
+  # Up Bank budget sync: preview (network) then apply (params only)
+  get "budget/up_import", to: "up_imports#new", as: :new_up_import
+  post "budget/up_import", to: "up_imports#create", as: :up_import
   
   # AI Assistant routes
   get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant

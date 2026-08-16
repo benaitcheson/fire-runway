@@ -1,6 +1,12 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Cashflow Allocator</h1>
+    <% if up_bank_configured? %>
+      <%= link_to "Sync from Up", new_up_import_path,
+            class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    <% else %>
+      <span class="text-sm text-gray-400">Set UP_API_TOKEN to sync from Up Bank</span>
+    <% end %>
   </div>
 
   <% frequencies = BudgetItem::FREQUENCIES.keys %>

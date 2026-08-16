@@ -7,4 +7,8 @@ module BudgetHelper
   def budget_amount(dollars)
     number_with_precision(dollars, precision: 2, delimiter: ",")
   end
+
+  def up_bank_configured?
+    ENV["UP_API_TOKEN"].present?
+  end
 end

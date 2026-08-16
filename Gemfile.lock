@@ -310,6 +310,7 @@ DEPENDENCIES
   bootsnap
   chartkick
   debug
+  faraday
   importmap-rails
   ollama-ai
   pg (~> 1.6)

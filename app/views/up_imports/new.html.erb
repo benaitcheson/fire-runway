@@ -1,0 +1,97 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2">Sync from Up</h1>
+  <p class="text-gray-600 mb-6">Monthly averages from your settled Up transactions. Nothing changes until you apply.</p>
+
+  <%= form_with url: new_up_import_path, method: :get, class: "bg-white rounded-lg shadow-md p-6 mb-6 flex flex-wrap items-end gap-4" do |form| %>
+    <div>
+      <%= form.label :lookback_months, "Averaged over", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.select :lookback_months,
+            options_for_select([["1 month", 1], ["3 months", 3], ["6 months", 6], ["12 months", 12]], @lookback_months),
+            {}, class: "w-40 px-3 py-2 border border-gray-300 rounded-md" %>
+    </div>
+    <%= form.submit "Refresh preview", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+  <% end %>
+
+  <% if @proposals.empty? %>
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+      <p class="text-gray-500 mb-4">No settled Up transactions in the last <%= pluralize(@lookback_months, "month") %>.</p>
+      <%= link_to "Back to budget", budget_path, class: "text-blue-600 hover:underline" %>
+    </div>
+  <% else %>
+    <%= form_with url: up_import_path, method: :post do %>
+      <% overrides = @proposals.count(&:conflict?) %>
+      <% if overrides.positive? %>
+        <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 mb-6 flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm"><%= pluralize(overrides, "row") %> would override amounts you've entered — those start unchecked.</p>
+          <label class="text-sm font-medium cursor-pointer">
+            <input type="checkbox" onchange="document.querySelectorAll('[data-override]').forEach(box => box.checked = this.checked)">
+            Select all overrides
+          </label>
+        </div>
+      <% end %>
+
+      <% @proposals.group_by(&:section).each do |section, proposals| %>
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto mb-8">
+          <table class="min-w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="py-3 px-4 w-10"></th>
+                <th class="py-3 px-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"><%= BudgetItem::SECTIONS[section] %></th>
+                <th class="py-3 px-4 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Current</th>
+                <th class="py-3 px-4 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Proposed / month</th>
+                <th class="py-3 px-4 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Transactions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% proposals.each do |proposal| %>
+                <% index = @proposals.index(proposal) %>
+                <tr class="<%= "bg-amber-50" if proposal.conflict? %>">
+                  <td class="py-3 px-4">
+                    <input type="checkbox" name="proposals[<%= index %>][include]" value="1"
+                           <%= "checked" if proposal.preselected? %>
+                           <%= "data-override" if proposal.conflict? %>
+                           class="h-4 w-4 cursor-pointer">
+                    <input type="hidden" name="proposals[<%= index %>][section]" value="<%= proposal.section %>">
+                    <input type="hidden" name="proposals[<%= index %>][name]" value="<%= proposal.name %>">
+                    <input type="hidden" name="proposals[<%= index %>][proposed_monthly_cents]" value="<%= proposal.proposed_monthly_cents %>">
+                  </td>
+                  <td class="py-3 px-4">
+                    <%= proposal.name %>
+                    <% if proposal.new_row? %>
+                      <span class="ml-1 text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">new row</span>
+                    <% elsif proposal.conflict? %>
+                      <span class="ml-1 text-xs bg-amber-100 text-amber-800 rounded px-1.5 py-0.5">overrides your value</span>
+                    <% end %>
+                    <% if proposal.unmapped %>
+                      <span class="ml-1 text-xs bg-amber-100 text-amber-800 rounded px-1.5 py-0.5">unmapped category</span>
+                    <% end %>
+                    <% if proposal.sample_descriptions.any? %>
+                      <p class="text-xs text-gray-500 mt-0.5"><%= proposal.sample_descriptions.join(", ") %></p>
+                    <% end %>
+                  </td>
+                  <td class="py-3 px-4 text-right text-sm">
+                    <% if proposal.current_amount_cents %>
+                      $<%= budget_amount(proposal.current_amount_cents / 100.0) %> <span class="text-gray-500"><%= proposal.current_frequency %></span>
+                      <% if proposal.current_frequency != "monthly" %>
+                        <p class="text-xs text-gray-500">≈ $<%= budget_amount(proposal.current_monthly_cents / 100.0) %>/mo</p>
+                      <% end %>
+                    <% else %>
+                      <span class="text-gray-400">—</span>
+                    <% end %>
+                  </td>
+                  <td class="py-3 px-4 text-right text-sm font-medium">$<%= budget_amount(proposal.proposed_monthly_cents / 100.0) %></td>
+                  <td class="py-3 px-4 text-right text-sm text-gray-500"><%= proposal.transaction_count %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+
+      <div class="flex items-center gap-4">
+        <%= submit_tag "Apply selected", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+        <%= link_to "Cancel", budget_path, class: "text-gray-600 hover:underline" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
