@@ -33,7 +33,7 @@ module Ai
 
         tool_calls = message["tool_calls"]
         if tool_calls.blank?
-          content = message["content"].to_s
+          content = message["content"].to_s.strip
           persist_exchange!(content)
           return { content: content }
         end
