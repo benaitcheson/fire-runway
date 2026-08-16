@@ -3,6 +3,10 @@
 #
 # No pid_file here: `rails server` writes tmp/pids/server.pid itself, and
 # Raptor refuses to start if its pid_file already exists.
+#
+# On macOS, run via bin/dev (or export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+# first): Raptor forks workers, and Apple's ObjC runtime otherwise kills any
+# forked worker that makes an HTTP call.
 
 env = ENV.fetch("RAILS_ENV", "development")
 

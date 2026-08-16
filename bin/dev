@@ -8,6 +8,12 @@ fi
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 
+# Raptor forks its workers, and on macOS any page that makes an HTTP call
+# (e.g. the AI assistant hitting Ollama) touches Apple's Foundation framework,
+# which aborts forked processes by default. This is the standard dev-only
+# workaround; production runs on Linux where it has no effect.
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY="YES"
+
 # Let the debug gem allow remote connections,
 # but avoid loading until `debugger` is called
 export RUBY_DEBUG_OPEN="true"
