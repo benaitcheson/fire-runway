@@ -11,13 +11,15 @@
       data-slider-sync-target="slider"
       data-action="input->slider-sync#syncToNumber"
     >
+    <%# step="any": the slider snaps to coarse steps for dragging, but typed
+        values like 4685 or 5.25 must submit without browser validation errors %>
     <input
       type="number"
       name="<%= name %>"
       value="<%= value %>"
       min="<%= min %>"
       max="<%= max %>"
-      step="<%= step %>"
+      step="any"
       class="w-28 border border-gray-300 rounded px-2 py-1 text-sm text-right"
       data-slider-sync-target="number"
       data-action="input->slider-sync#syncToSlider"
