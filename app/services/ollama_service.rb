@@ -10,7 +10,7 @@ class OllamaService
     )
   end
 
-  def generate(prompt, model: 'llama3.2:latest')
+  def generate(prompt, model: ENV.fetch('OLLAMA_DEFAULT_MODEL', 'qwen3:8b'))
     response = @client.generate(
       { model: model, prompt: prompt }
     )
@@ -21,7 +21,7 @@ class OllamaService
     { error: e.message }
   end
 
-  def chat(messages, model: 'llama3.2:latest')
+  def chat(messages, model: ENV.fetch('OLLAMA_DEFAULT_MODEL', 'qwen3:8b'))
     response = @client.chat(
       { model: model, messages: messages }
     )
@@ -34,7 +34,7 @@ class OllamaService
 
   # Tool-calling chat. Returns the raw assistant message hash (with "content"
   # and optionally "tool_calls") rather than flattened text.
-  def chat_with_tools(messages:, tools:, model: 'llama3.2:latest')
+  def chat_with_tools(messages:, tools:, model: ENV.fetch('OLLAMA_DEFAULT_MODEL', 'qwen3:8b'))
     client = Ollama.new(
       credentials: { address: ENV.fetch('OLLAMA_URL', 'http://localhost:11434') },
       options: { server_sent_events: false }

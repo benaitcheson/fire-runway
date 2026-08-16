@@ -3,7 +3,7 @@
 # You can start it with: ollama serve
 
 # Optional: Set default model
-ENV['OLLAMA_DEFAULT_MODEL'] ||= 'llama3.2:latest'
+ENV['OLLAMA_DEFAULT_MODEL'] ||= 'qwen3:8b'
 
 # Verify Ollama is available on boot (in development only)
 if Rails.env.development?

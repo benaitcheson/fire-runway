@@ -13,7 +13,7 @@ class AiAssistantController < ApplicationController
 
   def chat
     @prompt = params[:prompt]
-    @model = params[:model] || ENV["OLLAMA_DEFAULT_MODEL"] || "llama3.2:latest"
+    @model = params[:model] || ENV.fetch("OLLAMA_DEFAULT_MODEL", "qwen3:8b")
 
     @response =
       if @prompt.present?
