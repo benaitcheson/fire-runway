@@ -19,6 +19,6 @@ class AssetValuation < ApplicationRecord
   private
 
   def not_in_future
-    errors.add(:valued_on, "can't be in the future") if valued_on.present? && valued_on > Date.today
+    errors.add(:valued_on, "can't be in the future") if valued_on.present? && valued_on > Date.current
   end
 end

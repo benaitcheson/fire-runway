@@ -48,6 +48,33 @@ class RunwayControllerTest < ActionDispatch::IntegrationTest
     assert_match "No runway yet", response.body
   end
 
+  test "remembers recalculated inputs and reopens with them" do
+    get runway_url, params: { monthly_spend: 4685, annual_growth: 5.2 }
+    assert_response :success
+    assert_equal 468_500, @user.reload.runway_monthly_spend_cents
+    assert_equal 5.2, @user.runway_annual_growth.to_f
+
+    get runway_url
+    assert_response :success
+    assert_match 'value="4685"', response.body
+    assert_match 'value="5.2"', response.body
+  end
+
+  test "saved values beat the budget default but params beat saved" do
+    @user.update!(runway_monthly_spend_cents: 300_000)
+    get runway_url, params: { monthly_spend: 1000 }
+    assert_response :success
+    assert_match 'value="1000"', response.body
+    assert_equal 100_000, @user.reload.runway_monthly_spend_cents
+  end
+
+  test "accepts amounts that are not round multiples" do
+    get runway_url, params: { monthly_spend: 4685.55, annual_growth: 5.25 }
+    assert_response :success
+    assert_equal 468_555, @user.reload.runway_monthly_spend_cents
+    assert_equal 5.25, @user.runway_annual_growth.to_f
+  end
+
   test "reports an indefinite runway when growth covers spending" do
     @user.user_liabilities.destroy_all
     @user.user_assets.destroy_all

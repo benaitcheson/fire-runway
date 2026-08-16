@@ -23,7 +23,9 @@ class User < ApplicationRecord
 
   validates :email, presence: true, uniqueness: true
   validates_format_of :email, with: URI::MailTo::EMAIL_REGEXP
-  validates :password, length: { minimum: 6 }
+  # allow_nil: updates that don't touch the password must not require one;
+  # has_secure_password still enforces presence on create.
+  validates :password, length: { minimum: 6 }, allow_nil: true
 
   def confirm!
     update_columns(confirmed_at: Time.current)

@@ -228,7 +228,7 @@ class UserAsset < ApplicationRecord
   private
   
   def purchase_date_not_in_future
-    if purchase_date.present? && purchase_date > Date.today
+    if purchase_date.present? && purchase_date > Date.current
       errors.add(:purchase_date, "can't be in the future")
     end
   end

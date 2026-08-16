@@ -8,10 +8,15 @@ class RunwayController < ApplicationController
     @pool_cents = @liquid_assets_cents - @liabilities_cents
 
     @budget_monthly_spend_cents = budget_monthly_spend_cents
-    @monthly_spend = params.fetch(:monthly_spend) { (@budget_monthly_spend_cents / 100.0).round }.to_f
+    @monthly_spend = params[:monthly_spend].presence&.to_f ||
+                     current_user.runway_monthly_spend_cents&./(100.0) ||
+                     (@budget_monthly_spend_cents / 100.0).round
+    @annual_growth = (params[:annual_growth].presence ||
+                      current_user.runway_annual_growth || 0).to_f
     @monthly_spend = @monthly_spend.to_i if (@monthly_spend % 1).zero?
-    @annual_growth = params.fetch(:annual_growth, 0).to_f
     @monthly_surplus_cents = current_user.monthly_budget_surplus_cents
+
+    remember_settings if params[:monthly_spend].present? || params[:annual_growth].present?
 
     return if @monthly_spend <= 0
 
@@ -27,5 +32,11 @@ class RunwayController < ApplicationController
   # Bills + everyday spending from the budget, normalised to a month.
   def budget_monthly_spend_cents
     (current_user.budget_items.where(section: %w[bills everyday]).sum(&:yearly_cents) / 12.0).round
+  end
+
+  # Remember the last recalculated inputs so the page reopens with them.
+  def remember_settings
+    current_user.update!(runway_monthly_spend_cents: (@monthly_spend.to_f * 100).round,
+                         runway_annual_growth: @annual_growth)
   end
 end

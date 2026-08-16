@@ -31,7 +31,7 @@
       <p class="text-xs text-gray-500 mb-1">Defaults to bills + everyday from your budget</p>
       <div class="relative">
         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
-        <%= form.number_field :monthly_spend, value: @monthly_spend, step: 10, min: 0,
+        <%= form.number_field :monthly_spend, value: @monthly_spend, step: :any, min: 0,
               class: "w-40 pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
       </div>
     </div>
@@ -39,12 +39,13 @@
       <%= form.label :annual_growth, "Return on remaining money", class: "block text-sm font-medium text-gray-700 mb-1" %>
       <p class="text-xs text-gray-500 mb-1">0% is the cautious default</p>
       <div class="relative">
-        <%= form.number_field :annual_growth, value: @annual_growth, step: 0.1, min: 0,
+        <%= form.number_field :annual_growth, value: @annual_growth, step: :any, min: 0,
               class: "w-40 pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
         <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
       </div>
     </div>
     <%= form.submit "Recalculate", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+    <p class="text-xs text-gray-500 basis-full">Recalculated values are remembered for next time.</p>
   <% end %>
 
   <% if @monthly_spend <= 0 %>

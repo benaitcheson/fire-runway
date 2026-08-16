@@ -20,6 +20,6 @@ class AssetContribution < ApplicationRecord
   private
 
   def not_in_future
-    errors.add(:occurred_on, "can't be in the future") if occurred_on.present? && occurred_on > Date.today
+    errors.add(:occurred_on, "can't be in the future") if occurred_on.present? && occurred_on > Date.current
   end
 end
