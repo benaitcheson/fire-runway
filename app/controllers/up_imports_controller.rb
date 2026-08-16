@@ -10,7 +10,7 @@ class UpImportsController < ApplicationController
       return redirect_to budget_path, alert: "Set UP_API_TOKEN to enable Up sync."
     end
 
-    @lookback_months = params.fetch(:lookback_months, 3).to_i.clamp(1, 12)
+    @lookback_months = params.fetch(:lookback_months, 12).to_i.clamp(1, 12)
     @proposals = importer_factory.call(user: current_user, lookback_months: @lookback_months).call
   rescue UpBank::AuthError
     redirect_to budget_path, alert: "Up rejected the API token — check UP_API_TOKEN."

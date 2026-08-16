@@ -49,7 +49,7 @@ module UpBank
 
     SECTION_ORDER = BudgetItem::SECTIONS.keys.each_with_index.to_h.freeze
 
-    def initialize(user:, client: UpBank::Client.new, lookback_months: 3)
+    def initialize(user:, client: UpBank::Client.new, lookback_months: 12)
       @user = user
       @client = client
       @lookback_months = lookback_months
