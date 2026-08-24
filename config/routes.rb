@@ -40,6 +40,9 @@ Rails.application.routes.draw do
   # Debt payoff planner
   get "payoff_planner", to: "payoff_planner#index", as: :payoff_planner
 
+  # Investment loan tax outcomes
+  get "loan_tax", to: "loan_tax#index", as: :loan_tax
+
   # Investment Comparison
   get "investment_comparison", to: "investment_comparison#index", as: :investment_comparison
   post "investment_comparison/calculate", to: "investment_comparison#calculate", as: :investment_comparison_calculate

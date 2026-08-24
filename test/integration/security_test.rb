@@ -12,7 +12,7 @@ class SecurityTest < ActionDispatch::IntegrationTest
 
   PROTECTED_GETS = [
     "/", "/dashboard/index", "/user_assets", "/user_liabilities",
-    "/budget", "/ai_assistant", "/investment_comparison"
+    "/budget", "/ai_assistant", "/investment_comparison", "/loan_tax"
   ].freeze
 
   test "every protected page redirects logged-out users to login" do

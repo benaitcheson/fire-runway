@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_220546) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -88,6 +88,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_220546) do
     t.datetime "confirmed_at"
     t.datetime "created_at", null: false
     t.string "email", null: false
+    t.decimal "loan_tax_capital_growth", precision: 5, scale: 2
+    t.decimal "loan_tax_dividend_yield", precision: 5, scale: 2
+    t.decimal "loan_tax_franking_pct", precision: 5, scale: 2
+    t.bigint "loan_tax_gross_salary_cents"
+    t.boolean "loan_tax_has_hecs"
+    t.bigint "loan_tax_hecs_balance_cents"
+    t.decimal "loan_tax_interest_rate", precision: 5, scale: 2
+    t.bigint "loan_tax_loan_amount_cents"
+    t.string "loan_tax_loan_type"
+    t.boolean "loan_tax_private_hospital_cover"
+    t.integer "loan_tax_term_years"
     t.string "password_digest", null: false
     t.decimal "runway_annual_growth", precision: 5, scale: 2
     t.integer "runway_monthly_spend_cents"

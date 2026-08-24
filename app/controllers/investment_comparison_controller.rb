@@ -57,17 +57,7 @@ class InvestmentComparisonController < ApplicationController
   # 2% Medicare levy. Nil below the tax-free threshold (form default applies).
   def marginal_tax_rate
     gross = estimated_gross_salary
-    return nil unless gross
-
-    bracket =
-      case gross
-      when 0...18_200 then nil
-      when 18_200...45_000 then 16.0
-      when 45_000...135_000 then 30.0
-      when 135_000...190_000 then 37.0
-      else 45.0
-      end
-    bracket && bracket + 2.0
+    gross && Tax::AustralianResident.marginal_rate(gross)
   end
 
   # Rate from the largest entered mortgage/home-loan liability, if any.

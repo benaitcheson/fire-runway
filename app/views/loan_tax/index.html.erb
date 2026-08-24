@@ -1,0 +1,213 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2">Loan Tax</h1>
+  <p class="text-gray-600 mb-6">What does an investment loan do to your tax and wealth? Borrow to invest, deduct the interest, and see the with/without picture year by year.</p>
+
+  <%= form_with url: loan_tax_path, method: :get, class: "bg-white rounded-lg shadow-md p-6 mb-6" do |form| %>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <%= form.label :gross_salary, "Gross salary", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :gross_salary, value: @gross_salary, step: :any, min: 0,
+                class: "w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+        </div>
+      </div>
+      <div>
+        <%= form.label :loan_amount, "Loan amount", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :loan_amount, value: @loan_amount, step: :any, min: 0,
+                class: "w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+        </div>
+      </div>
+      <div>
+        <%= form.label :interest_rate, "Interest rate", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :interest_rate, value: @interest_rate, step: :any, min: 0,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <%= form.label :loan_type, "Loan type", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.select :loan_type,
+              options_for_select([["Principal & interest", "principal_and_interest"],
+                                  ["Interest only", "interest_only"]], @loan_type),
+              {}, class: "w-full px-3 py-2 border border-gray-300 rounded-md bg-white" %>
+      </div>
+      <div>
+        <%= form.label :term_years, "Term (years)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.number_field :term_years, value: @term_years, step: 1, min: 1, max: 40,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-right" %>
+      </div>
+      <div>
+        <%= form.label :dividend_yield, "Dividend yield", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :dividend_yield, value: @dividend_yield, step: :any, min: 0,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <%= form.label :franking_pct, "Franked portion", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :franking_pct, value: @franking_pct, step: :any, min: 0, max: 100,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <%= form.label :capital_growth, "Capital growth", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :capital_growth, value: @capital_growth, step: :any, min: 0,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-end gap-4 mt-4">
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :has_hecs, checked: @has_hecs, class: "rounded border-gray-300" %>
+        I have a HECS/HELP debt
+      </label>
+      <div>
+        <%= form.label :hecs_balance, "HECS balance (optional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :hecs_balance, value: @hecs_balance, step: :any, min: 0,
+                class: "w-40 pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+        </div>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-gray-700">
+        <%= form.check_box :private_hospital_cover, checked: @private_hospital_cover, class: "rounded border-gray-300" %>
+        Private hospital cover
+      </label>
+      <%= form.submit "Recalculate", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+      <p class="text-xs text-gray-500 basis-full">Recalculated values are remembered for next time.</p>
+    </div>
+  <% end %>
+
+  <% if @result %>
+    <% year_one = @result.year_one %>
+    <% with_loan = year_one.with_loan %>
+    <% without_loan = year_one.without_loan %>
+    <% first_year = @result.years.first %>
+
+    <h2 class="text-xl font-semibold text-gray-700 mb-3">Year 1: your tax, side by side</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <% [["Without the loan", without_loan, nil], ["With the loan", with_loan, first_year]].each do |title, assessment, row| %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-sm font-medium text-gray-500 mb-3"><%= title %></h3>
+          <dl class="space-y-1 text-sm">
+            <div class="flex justify-between"><dt class="text-gray-600">Taxable income</dt><dd class="font-medium"><%= number_to_currency(assessment.taxable_income, precision: 0) %></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-600">Income tax</dt><dd><%= number_to_currency([assessment.base_tax - assessment.lito, 0].max, precision: 0) %></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-600">Medicare levy</dt><dd><%= number_to_currency(assessment.medicare_levy, precision: 0) %></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-600">Medicare levy surcharge</dt><dd><%= number_to_currency(assessment.medicare_levy_surcharge, precision: 0) %></dd></div>
+            <% if @has_hecs %>
+              <div class="flex justify-between"><dt class="text-gray-600">HECS repayment</dt><dd><%= number_to_currency(assessment.hecs_repayment, precision: 0) %></dd></div>
+            <% end %>
+            <% if row && row.franking_credits.positive? %>
+              <div class="flex justify-between"><dt class="text-gray-600">Franking credits</dt><dd class="text-green-600">&minus;<%= number_to_currency(row.franking_credits, precision: 0) %></dd></div>
+            <% end %>
+            <div class="flex justify-between border-t pt-1 mt-1"><dt class="text-gray-600 font-medium">Total tax payable</dt><dd class="font-bold"><%= number_to_currency(assessment.total_payable, precision: 0) %></dd></div>
+          </dl>
+        </div>
+      <% end %>
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-sm font-medium text-gray-500 mb-3">Difference</h3>
+        <dl class="space-y-1 text-sm">
+          <div class="flex justify-between"><dt class="text-gray-600">Tax saved (year 1)</dt>
+            <dd class="font-bold <%= year_one.tax_saved.negative? ? "text-red-600" : "text-green-600" %>"><%= number_to_currency(year_one.tax_saved, precision: 0) %></dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Interest paid (year 1)</dt><dd><%= number_to_currency(first_year.interest, precision: 0) %></dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Disposable income change</dt>
+            <dd class="<%= year_one.take_home_delta.negative? ? "text-red-600" : "text-green-600" %>"><%= number_to_currency(year_one.take_home_delta, precision: 0) %></dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Effective carrying cost</dt><dd><%= number_with_precision(year_one.effective_interest_rate, precision: 2) %>% p.a.</dd></div>
+          <% if year_one.marginal_rate %>
+            <div class="flex justify-between"><dt class="text-gray-600">Marginal rate (incl. Medicare)</dt><dd><%= number_with_precision(year_one.marginal_rate, precision: 0) %>%</dd></div>
+          <% end %>
+          <div class="flex justify-between items-center pt-1"><dt class="text-gray-600">Gearing position</dt>
+            <dd><span class="text-xs font-semibold px-2 py-0.5 rounded-full <%= { negative: "bg-red-100 text-red-800", positive: "bg-green-100 text-green-800", neutral: "bg-gray-100 text-gray-800" }[year_one.gearing_position] %>">
+              <%= year_one.gearing_position.to_s.capitalize %></span></dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <% if @has_hecs && year_one.gearing_position == :negative && year_one.hecs_delta.abs < 1 %>
+      <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 mb-6">
+        <p class="text-sm"><strong>HECS gotcha:</strong> your HECS repayment is unchanged at
+        <%= number_to_currency(with_loan.hecs_repayment, precision: 0) %>. HELP repayment income adds net
+        investment losses back, so negative gearing lowers your income tax but not your HECS. The same
+        add-back applies to the Medicare levy surcharge.</p>
+      </div>
+    <% end %>
+
+    <% verdict = @result.verdict %>
+    <div class="<%= verdict.break_even ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200" %> border rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg <%= verdict.break_even ? "text-green-900" : "text-red-900" %> mb-1">
+        <%= verdict.break_even ? "The strategy comes out ahead — on your assumptions" : "The strategy is behind on your assumptions" %>
+      </h2>
+      <p class="<%= verdict.break_even ? "text-green-900" : "text-red-900" %>">
+        After tax, this debt costs you <strong><%= number_with_precision(verdict.after_tax_cost_of_debt_pct, precision: 2) %>% p.a.</strong>
+        (the deduction discounts the headline <%= @interest_rate %>%). You're assuming
+        <strong><%= number_with_precision(verdict.assumed_total_return_pct, precision: 2) %>% p.a.</strong> in total returns
+        (yield + growth<%= " + franking" if @franking_pct.to_f.positive? && @dividend_yield.to_f.positive? %>).
+        Over <%= @term_years %> years that's <%= number_to_currency(verdict.total_interest, precision: 0) %> of interest,
+        <%= number_to_currency(verdict.total_tax_saved, precision: 0) %> of tax saved, and a projected net wealth change of
+        <strong><%= number_to_currency(verdict.net_wealth_delta, precision: 0) %></strong>.
+      </p>
+      <% if verdict.interest_only %>
+        <p class="mt-2 text-sm <%= verdict.break_even ? "text-green-900" : "text-red-900" %>">Interest-only: the full
+        <%= number_to_currency(@loan_amount, precision: 0) %> principal is still owed at the end of the term.</p>
+      <% end %>
+      <p class="mt-2 text-xs text-gray-600">Deductions never make you money on their own — every $1 of interest still costs
+      you <%= number_with_precision(100 - (year_one.marginal_rate || 0), precision: 0) %>c after tax. The strategy only works if
+      the investment out-earns the after-tax cost of the debt. Margin loans also carry margin-call risk, which isn't modelled here.</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Over the loan term</h3>
+      <%= line_chart @chart_data, height: "300px", prefix: "$", thousands: "," %>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6 overflow-x-auto">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Year by year</h3>
+      <table class="min-w-full text-sm text-right">
+        <thead>
+          <tr class="text-gray-500 border-b">
+            <th class="py-2 pr-4 text-left font-medium">Year</th>
+            <th class="py-2 px-3 font-medium">Interest</th>
+            <th class="py-2 px-3 font-medium">Tax saved</th>
+            <% if @has_hecs %><th class="py-2 px-3 font-medium">HECS</th><% end %>
+            <th class="py-2 px-3 font-medium">Dividends (+credits)</th>
+            <th class="py-2 px-3 font-medium">Net cashflow</th>
+            <th class="py-2 px-3 font-medium">Loan balance</th>
+            <th class="py-2 px-3 font-medium">Investment value</th>
+            <th class="py-2 pl-3 font-medium">Equity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @result.years.each do |row| %>
+            <tr class="border-b border-gray-100">
+              <td class="py-1.5 pr-4 text-left"><%= row.year %></td>
+              <td class="py-1.5 px-3"><%= number_to_currency(row.interest, precision: 0) %></td>
+              <td class="py-1.5 px-3 <%= row.tax_saved.negative? ? "text-red-600" : "text-green-600" %>"><%= number_to_currency(row.tax_saved, precision: 0) %></td>
+              <% if @has_hecs %><td class="py-1.5 px-3"><%= number_to_currency(row.hecs_with, precision: 0) %></td><% end %>
+              <td class="py-1.5 px-3"><%= number_to_currency(row.dividends, precision: 0) %><% if row.franking_credits.positive? %> <span class="text-gray-400">(+<%= number_to_currency(row.franking_credits, precision: 0) %>)</span><% end %></td>
+              <td class="py-1.5 px-3 <%= row.net_cashflow.negative? ? "text-red-600" : "text-green-600" %>"><%= number_to_currency(row.net_cashflow, precision: 0) %></td>
+              <td class="py-1.5 px-3"><%= number_to_currency(row.closing_balance, precision: 0) %></td>
+              <td class="py-1.5 px-3"><%= number_to_currency(row.investment_value, precision: 0) %></td>
+              <td class="py-1.5 pl-3"><%= number_to_currency(row.equity, precision: 0) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="text-xs text-gray-500 mt-3">Assumes salary stays constant, dividends are taken as cash (not reinvested),
+      and the whole loan is invested on day one. On a P&amp;I loan the deductible interest shrinks every year as principal
+      is repaid — watch the "Tax saved" column fall.</p>
+    </div>
+
+    <p class="text-xs text-gray-500">Uses <%= Tax::AustralianResident::FINANCIAL_YEAR %> Australian resident rates:
+    income tax brackets, LITO, Medicare levy, Medicare levy surcharge (single, no dependants) and HELP/HECS marginal
+    repayments. Estimates only — not financial or tax advice.</p>
+  <% end %>
+</div>
