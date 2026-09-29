@@ -1,0 +1,198 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2">Forecast</h1>
+  <p class="text-gray-600 mb-6">Where does your net worth go over the next <%= @horizon_years %> years — and what happens once you retire? All figures are in today's dollars.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Investments today</h3>
+      <p class="text-2xl font-bold text-green-600"><%= format_currency(@investments_cents, "AUD") %></p>
+      <% if @other_assets_cents.positive? %>
+        <p class="text-xs text-gray-500 mt-1">+ <%= format_currency(@other_assets_cents, "AUD") %> in depreciating assets, which follow their own curves</p>
+      <% end %>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Debts today</h3>
+      <p class="text-2xl font-bold text-red-600">&minus;<%= format_currency(@liabilities_cents, "AUD") %></p>
+      <p class="text-xs text-gray-500 mt-1">Paid down at each debt's minimum repayment</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Net worth today</h3>
+      <% today_cents = @investments_cents + @other_assets_cents - @liabilities_cents %>
+      <p class="text-2xl font-bold <%= today_cents >= 0 ? "text-gray-900" : "text-red-600" %>"><%= format_currency(today_cents, "AUD") %></p>
+    </div>
+  </div>
+
+  <%= form_with url: forecast_path, method: :get, class: "bg-white rounded-lg shadow-md p-6 mb-6" do |form| %>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <%= form.label :current_age, "Your age", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.number_field :current_age, value: @current_age, step: 1, min: 16, max: 100,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-right" %>
+      </div>
+      <div>
+        <%= form.label :retirement_age, "Retire at", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.number_field :retirement_age, value: @retirement_age, step: 1, min: 16, max: 110,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-right" %>
+      </div>
+      <div>
+        <%= form.label :horizon_years, "Years ahead", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.number_field :horizon_years, value: @horizon_years, step: 1, min: 1, max: NetWorth::Projection::MAX_YEARS,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-right" %>
+      </div>
+      <div>
+        <%= form.label :annual_growth, "Investment growth", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :annual_growth, value: @annual_growth, step: :any, min: 0,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <%= form.label :inflation, "Inflation", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <%= form.number_field :inflation, value: @inflation, step: :any, min: 0,
+                class: "w-full pr-8 pl-3 py-2 border border-gray-300 rounded-md text-right" %>
+          <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <%= form.label :monthly_contribution, "Invested per month", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :monthly_contribution, value: @monthly_contribution, step: :any, min: 0,
+                class: "w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Defaults to your budget surplus</p>
+      </div>
+      <div>
+        <%= form.label :retirement_spend, "Spend per month, retired", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <%= form.number_field :retirement_spend, value: @retirement_spend, step: :any, min: 0,
+                class: "w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md text-right" %>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Defaults to bills + everyday from your budget</p>
+      </div>
+      <div class="flex items-end">
+        <%= form.submit "Recalculate", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+      </div>
+    </div>
+    <p class="text-xs text-gray-500 mt-3">Recalculated values are remembered for next time. Growth is deflated by inflation, so every figure below is in today's dollars.</p>
+  <% end %>
+
+  <% retirement = @result.at_retirement %>
+  <% final = @result.final %>
+  <% retires_in_horizon = @retirement_age > @current_age && @retirement_age <= @end_age %>
+
+  <% if @result.depleted? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg text-red-900 mb-1">Your investments run out at age <%= @result.depleted_at_age %></h2>
+      <p class="text-red-900">Retiring at <%= @retirement_age %> with <%= format_currency(retirement.investments_cents, "AUD") %> invested
+      and spending <%= format_currency((@retirement_spend.to_f * 100).round, "AUD") %>/month, the pool is empty
+      <%= @result.depleted_at_age - @retirement_age %> <%= "year".pluralize(@result.depleted_at_age - @retirement_age) %> in.
+      <% if @earliest_retirement_age %>
+        Retiring at <strong><%= @earliest_retirement_age %></strong> instead would last to age <%= @end_age %>.
+      <% else %>
+        Even working to <%= @end_age %> doesn't get there — try investing more or spending less in retirement.
+      <% end %></p>
+    </div>
+  <% elsif retires_in_horizon %>
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg text-green-900 mb-1">Your money lasts to age <%= @end_age %></h2>
+      <p class="text-green-900">Retiring at <%= @retirement_age %> with <%= format_currency(retirement.investments_cents, "AUD") %> invested,
+      you finish age <%= @end_age %> with <%= format_currency(final.net_worth_cents, "AUD") %>.
+      <% if @earliest_retirement_age && @earliest_retirement_age < @retirement_age %>
+        You could retire as early as <strong><%= @earliest_retirement_age %></strong> and still make it.
+      <% end %></p>
+    </div>
+  <% elsif @retirement_age <= @current_age %>
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg text-green-900 mb-1">Already retired, and the money lasts to age <%= @end_age %></h2>
+      <p class="text-green-900">Spending <%= format_currency((@retirement_spend.to_f * 100).round, "AUD") %>/month from today, you finish age <%= @end_age %> with <%= format_currency(final.net_worth_cents, "AUD") %>.</p>
+    </div>
+  <% else %>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+      <h2 class="font-bold text-lg text-blue-900 mb-1">Still working at the end of the horizon</h2>
+      <p class="text-blue-900">You retire at <%= @retirement_age %>, but the forecast stops at age <%= @end_age %>. Extend the years ahead to see retirement.
+      <% if @earliest_retirement_age %>
+        Within this horizon you could retire at <strong><%= @earliest_retirement_age %></strong> and the money would last to <%= @end_age %>.
+      <% end %></p>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Net worth at <%= retires_in_horizon ? "retirement (#{@retirement_age})" : "age #{retirement.age}" %></h3>
+      <p class="text-2xl font-bold text-gray-900"><%= format_currency(retirement.net_worth_cents, "AUD") %></p>
+      <p class="text-xs text-gray-500 mt-1"><%= retirement.date.year %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Net worth at age <%= @end_age %></h3>
+      <p class="text-2xl font-bold <%= final.net_worth_cents >= 0 ? "text-gray-900" : "text-red-600" %>"><%= format_currency(final.net_worth_cents, "AUD") %></p>
+      <p class="text-xs text-gray-500 mt-1"><%= final.date.year %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Peak net worth</h3>
+      <p class="text-2xl font-bold text-gray-900"><%= format_currency(@result.peak.net_worth_cents, "AUD") %></p>
+      <p class="text-xs text-gray-500 mt-1">age <%= @result.peak.age %>, <%= @result.peak.date.year %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-1">Debt free</h3>
+      <% if @liabilities_cents.zero? %>
+        <p class="text-2xl font-bold text-green-600">Already</p>
+      <% elsif @result.debt_free_at_age %>
+        <p class="text-2xl font-bold text-green-600">age <%= @result.debt_free_at_age %></p>
+        <p class="text-xs text-gray-500 mt-1">at minimum repayments</p>
+      <% else %>
+        <p class="text-2xl font-bold text-red-600">Not by <%= @end_age %></p>
+        <p class="text-xs text-gray-500 mt-1"><%= link_to "Set minimum repayments", user_liabilities_path, class: "text-blue-600 hover:underline" %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-xl font-semibold text-gray-700 mb-4">Net worth, year by year</h3>
+    <%= line_chart @chart_data, height: "360px", prefix: "$", thousands: ",", curve: false, legend: "bottom" %>
+    <p class="text-xs text-gray-500 mt-2">The net worth line changes colour at retirement. Today's dollars throughout.</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="p-6 border-b">
+      <h3 class="text-xl font-semibold text-gray-700">Milestones</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <tr>
+            <th class="px-6 py-3">Age</th>
+            <th class="px-6 py-3">Year</th>
+            <th class="px-6 py-3">Phase</th>
+            <th class="px-6 py-3 text-right">Investments</th>
+            <th class="px-6 py-3 text-right">Other assets</th>
+            <th class="px-6 py-3 text-right">Debts</th>
+            <th class="px-6 py-3 text-right">Net worth</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          <% milestones = @result.yearly.select { |r| (r.age - @current_age) % 5 == 0 || r.age == @retirement_age || r == final } %>
+          <% milestones.uniq.each do |row| %>
+            <tr class="<%= row.age == @retirement_age ? "bg-purple-50 font-medium" : "" %>">
+              <td class="px-6 py-3"><%= row.age %></td>
+              <td class="px-6 py-3"><%= row.date.year %></td>
+              <td class="px-6 py-3"><%= row.age == @retirement_age ? "Retires" : (row.retired ? "Retired" : "Working") %></td>
+              <td class="px-6 py-3 text-right text-green-600"><%= format_currency(row.investments_cents, "AUD") %></td>
+              <td class="px-6 py-3 text-right"><%= format_currency(row.other_assets_cents, "AUD") %></td>
+              <td class="px-6 py-3 text-right text-red-600"><%= format_currency(row.liabilities_cents, "AUD") %></td>
+              <td class="px-6 py-3 text-right font-semibold <%= row.net_worth_cents >= 0 ? "text-gray-900" : "text-red-600" %>"><%= format_currency(row.net_worth_cents, "AUD") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-6 text-xs text-gray-500 space-y-1">
+    <p><strong>How it works.</strong> Market assets (shares, super, cash, property with valuations) form the investment pool and compound at the growth rate. Depreciating assets follow their own curves and are never spent. Each debt accrues interest and pays its minimum repayment every month; since that repayment is already in your budget, when a debt clears the money is invested (while working) or comes off your spending (once retired). A debt with no minimum repayment is held flat.</p>
+    <p>Everything in the investment pool is treated as spendable in retirement. If your home is in there, the forecast will happily draw it down — keep that in mind when reading the retirement numbers.</p>
+  </div>
+</div>

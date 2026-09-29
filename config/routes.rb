@@ -37,6 +37,9 @@ Rails.application.routes.draw do
   # FIRE runway — how long the money lasts
   get "runway", to: "runway#index", as: :runway
 
+  # Net worth forecast — 20 to 40 years ahead, through retirement
+  get "forecast", to: "forecast#index", as: :forecast
+
   # Debt payoff planner
   get "payoff_planner", to: "payoff_planner#index", as: :payoff_planner
 
