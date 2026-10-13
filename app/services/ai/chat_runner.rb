@@ -24,7 +24,8 @@ module Ai
         return { content: TopicGuard::REFUSAL }
       end
 
-      messages = [{ role: "system", content: Prompts.system_prompt }] + history +
+      system = Prompts.system_prompt(profile: @user.profile)
+      messages = [{ role: "system", content: system }] + history +
                  [{ role: "user", content: @prompt }]
 
       MAX_TURNS.times do

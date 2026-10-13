@@ -106,6 +106,28 @@ class Ai::ChatRunnerTest < ActiveSupport::TestCase
     assert_equal "and monthly?", sent.last[:content]
   end
 
+  test "system prompt carries the user's profile facts" do
+    @user.profile.update!(birth_year: Date.today.year - 29, target_retirement_age: 50,
+                          goals: "House deposit in 2 years")
+
+    ollama = FakeOllama.new({ "content" => "ok" })
+    call_runner(ollama, prompt: "hi")
+
+    system = ollama.calls.first.first[:content]
+    assert_includes system, "Age: 29"
+    assert_includes system, "Target retirement age: 50"
+    assert_includes system, "House deposit in 2 years"
+    assert_includes system, "get_profile_gaps"
+  end
+
+  test "system prompt says when the profile is empty" do
+    ollama = FakeOllama.new({ "content" => "ok" })
+    call_runner(ollama, prompt: "hi")
+
+    system = ollama.calls.first.first[:content]
+    assert_includes system, "has not filled in their Profile page"
+  end
+
   test "does not include another user's history" do
     users(:two).ai_messages.create!(role: "user", content: "SECRET question")
 

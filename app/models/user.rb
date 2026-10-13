@@ -20,12 +20,19 @@ class User < ApplicationRecord
   has_many :user_liabilities, dependent: :destroy
   has_many :budget_items, dependent: :destroy
   has_many :ai_messages, dependent: :destroy
+  has_one :financial_profile, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true
   validates_format_of :email, with: URI::MailTo::EMAIL_REGEXP
   # allow_nil: updates that don't touch the password must not require one;
   # has_secure_password still enforces presence on create.
   validates :password, length: { minimum: 6 }, allow_nil: true
+
+  # The fact-finder profile, built (unsaved) on first use so callers can read
+  # defaults or update! it without checking for nil.
+  def profile
+    financial_profile || build_financial_profile
+  end
 
   def confirm!
     update_columns(confirmed_at: Time.current)

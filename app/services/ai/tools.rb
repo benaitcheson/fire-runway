@@ -7,6 +7,26 @@ module Ai
       {
         type: "function",
         function: {
+          name: "get_profile",
+          description: "The user's fact-finder profile: age, household, employment, salary, " \
+                       "super, HECS, housing, retirement goals, risk tolerance, insurance and " \
+                       "notes. Unanswered fields are listed separately.",
+          parameters: { type: "object", properties: {}, required: [] }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_profile_gaps",
+          description: "Profile questions the user has not answered yet, each with the " \
+                       "question to ask them. Use this to find what to ask when advice " \
+                       "depends on a missing fact.",
+          parameters: { type: "object", properties: {}, required: [] }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "get_net_worth_summary",
           description: "Totals for the user's finances: asset purchase and current values, " \
                        "total liabilities, net worth, and counts. Call this for any question " \

@@ -1,5 +1,6 @@
 class AiAssistantController < ApplicationController
   before_action :initialize_ollama
+  before_action :load_profile, only: [:index, :chat]
 
   def index
     @models = @ollama.list_models
@@ -40,5 +41,10 @@ class AiAssistantController < ApplicationController
 
   def initialize_ollama
     @ollama = OllamaService.new
+  end
+
+  # The page nudges the user to finish their fact-finder profile.
+  def load_profile
+    @profile = current_user.profile
   end
 end

@@ -46,6 +46,44 @@ class Ai::ToolExecutorTest < ActiveSupport::TestCase
     assert_equal 4000.0, result["budget"]["surplus"]["weekly"]
   end
 
+  test "get_profile returns answered facts and lists the rest as unanswered" do
+    @user.profile.update!(birth_year: Date.today.year - 36, gross_salary_cents: 12_000_000,
+                          has_hecs: false, risk_tolerance: "growth", notes: "Expecting a bonus")
+
+    result = JSON.parse(@executor.execute("get_profile"))
+    assert_equal "36 (born #{Date.today.year - 36})", result["facts"]["About you"]["Age"]
+    assert_equal "$120,000", result["facts"]["Income and work"]["Gross annual salary"]
+    assert_equal "No", result["facts"]["Super and tax"]["HECS/HELP debt"]
+    assert_equal FinancialProfile::RISK_TOLERANCES["growth"], result["facts"]["Attitudes"]["Risk tolerance"]
+    assert_includes result["unanswered"], "Super balance"
+    assert_not_includes result["unanswered"], "Gross annual salary"
+    assert_equal 20, result["completeness_percent"]
+  end
+
+  test "get_profile with nothing answered is empty but well-formed" do
+    result = JSON.parse(@executor.execute("get_profile"))
+    assert_equal({}, result["facts"])
+    assert_equal 0, result["completeness_percent"]
+    assert_equal FinancialProfile::FIELDS.size, result["unanswered"].size
+  end
+
+  test "get_profile_gaps groups the unanswered questions by section" do
+    @user.profile.update!(birth_year: 1990, relationship_status: "single", dependants_count: 0)
+
+    result = JSON.parse(@executor.execute("get_profile_gaps"))
+    sections = result["gaps"].map { |g| g["section"] }
+    assert_not_includes sections, "About you"
+    assert_includes sections, "Goals"
+    goals = result["gaps"].find { |g| g["section"] == "Goals" }
+    assert_includes goals["questions"], "At what age would you like to retire or be financially independent?"
+  end
+
+  test "profile tools never read another user's profile" do
+    users(:two).profile.update!(notes: "SECRET other user")
+    result = @executor.execute("get_profile")
+    assert_no_match(/SECRET/, result)
+  end
+
   test "list_budget_items validates section" do
     result = JSON.parse(@executor.execute("list_budget_items", { "section" => "shopping" }))
     assert_match(/section must be one of/, result["error"])

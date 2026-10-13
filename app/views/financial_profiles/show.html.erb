@@ -1,0 +1,46 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <h1 class="text-3xl font-bold mb-2">Profile</h1>
+  <p class="text-gray-600 mb-6">The questions a financial planner asks before giving advice. Every field is optional; the AI assistant reads whatever you've answered before every question, and the Forecast and Loan Tax pages use these as their defaults.</p>
+
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex justify-between items-baseline mb-2">
+      <h2 class="text-sm font-medium text-gray-500">Profile completeness</h2>
+      <span class="text-sm font-semibold text-gray-900"><%= @profile.completeness_pct %>% (<%= @profile.answered_fields.size %> of <%= FinancialProfile::FIELDS.size %>)</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2" role="progressbar" aria-valuenow="<%= @profile.completeness_pct %>" aria-valuemin="0" aria-valuemax="100" aria-label="Profile completeness">
+      <div class="bg-blue-500 h-2 rounded-full" style="width: <%= @profile.completeness_pct %>%"></div>
+    </div>
+    <% if @profile.missing_fields.any? %>
+      <p class="text-xs text-gray-500 mt-2">The assistant gives sharper answers once it knows your age, income, super and goals. It can also ask you the gaps in chat.</p>
+    <% end %>
+  </div>
+
+  <%= form_with model: @profile, url: profile_path, method: :patch, class: "space-y-6" do |form| %>
+    <% if @profile.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-md p-4">
+        <h3 class="text-red-800 font-semibold mb-2"><%= pluralize(@profile.errors.count, "error") %> prohibited this profile from being saved:</h3>
+        <ul class="list-disc list-inside text-red-700">
+          <% @profile.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% FinancialProfile::SECTIONS.each do |key, section| %>
+      <fieldset class="bg-white rounded-lg shadow-md p-6">
+        <legend class="text-lg font-semibold text-gray-800 mb-1"><%= section[:title] %></legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <% section[:fields].each do |field| %>
+            <%= render "field", form: form, field: field, profile: @profile %>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+
+    <div class="flex items-center gap-4">
+      <%= form.submit "Save profile", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+      <%= link_to "Ask the assistant", ai_assistant_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+  <% end %>
+</div>

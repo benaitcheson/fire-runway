@@ -28,8 +28,9 @@ class LoanTaxController < ApplicationController
   # Precedence for every input: typed params > saved settings > default.
   def load_inputs
     user = current_user
+    profile = user.profile
     @gross_salary = float_param(:gross_salary) ||
-                    from_cents(user.loan_tax_gross_salary_cents) || 120_000
+                    from_cents(profile.gross_salary_cents) || 120_000
     @loan_amount = float_param(:loan_amount) ||
                    from_cents(user.loan_tax_loan_amount_cents) || 100_000
     @interest_rate = float_param(:interest_rate) ||
@@ -44,11 +45,11 @@ class LoanTaxController < ApplicationController
                     user.loan_tax_franking_pct&.to_f || 100.0
     @capital_growth = float_param(:capital_growth) ||
                       user.loan_tax_capital_growth&.to_f || 5.0
-    @has_hecs = boolean_input(:has_hecs, user.loan_tax_has_hecs)
+    @has_hecs = boolean_input(:has_hecs, profile.has_hecs)
     @hecs_balance = float_param(:hecs_balance) ||
-                    from_cents(user.loan_tax_hecs_balance_cents)
+                    from_cents(profile.hecs_balance_cents)
     @private_hospital_cover = boolean_input(:private_hospital_cover,
-                                            user.loan_tax_private_hospital_cover)
+                                            profile.private_hospital_cover)
 
     %i[@gross_salary @loan_amount @interest_rate @dividend_yield @franking_pct
        @capital_growth @hecs_balance].each do |ivar|
@@ -75,20 +76,24 @@ class LoanTaxController < ApplicationController
     end
   end
 
-  # Remember the last recalculated inputs so the page reopens with them.
+  # Remember the last recalculated inputs so the page reopens with them. Salary,
+  # HECS and hospital cover are facts about the person, so they live on the
+  # profile where the AI assistant and other pages share them.
   def remember_settings
     current_user.update!(
-      loan_tax_gross_salary_cents: (@gross_salary.to_f * 100).round,
       loan_tax_loan_amount_cents: (@loan_amount.to_f * 100).round,
       loan_tax_interest_rate: @interest_rate,
       loan_tax_loan_type: @loan_type,
       loan_tax_term_years: @term_years,
       loan_tax_dividend_yield: @dividend_yield,
       loan_tax_franking_pct: @franking_pct,
-      loan_tax_capital_growth: @capital_growth,
-      loan_tax_has_hecs: @has_hecs,
-      loan_tax_hecs_balance_cents: @hecs_balance ? (@hecs_balance.to_f * 100).round : nil,
-      loan_tax_private_hospital_cover: @private_hospital_cover
+      loan_tax_capital_growth: @capital_growth
+    )
+    current_user.profile.update!(
+      gross_salary_cents: (@gross_salary.to_f * 100).round,
+      has_hecs: @has_hecs,
+      hecs_balance_cents: @hecs_balance ? (@hecs_balance.to_f * 100).round : nil,
+      private_hospital_cover: @private_hospital_cover
     )
   end
 

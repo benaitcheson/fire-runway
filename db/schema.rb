@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,6 +57,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
     t.index ["user_id"], name: "index_budget_items_on_user_id"
   end
 
+  create_table "financial_profiles", force: :cascade do |t|
+    t.integer "birth_year"
+    t.text "concerns"
+    t.datetime "created_at", null: false
+    t.integer "dependants_count"
+    t.integer "emergency_fund_months"
+    t.string "employment_type"
+    t.text "goals"
+    t.bigint "gross_salary_cents"
+    t.boolean "has_hecs"
+    t.boolean "has_income_protection"
+    t.boolean "has_life_insurance"
+    t.boolean "has_will"
+    t.bigint "hecs_balance_cents"
+    t.string "housing_status"
+    t.string "income_stability"
+    t.string "investment_experience"
+    t.text "notes"
+    t.bigint "partner_gross_salary_cents"
+    t.boolean "private_hospital_cover"
+    t.string "relationship_status"
+    t.bigint "retirement_spend_monthly_cents"
+    t.string "risk_tolerance"
+    t.bigint "super_balance_cents"
+    t.decimal "super_employer_rate", precision: 5, scale: 2
+    t.bigint "super_salary_sacrifice_monthly_cents"
+    t.integer "target_retirement_age"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_financial_profiles_on_user_id", unique: true
+  end
+
   create_table "user_assets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "depreciation_method", default: "none"
@@ -89,22 +121,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.decimal "forecast_annual_growth", precision: 5, scale: 2
-    t.integer "forecast_birth_year"
     t.integer "forecast_horizon_years"
     t.decimal "forecast_inflation", precision: 5, scale: 2
     t.bigint "forecast_monthly_contribution_cents"
-    t.integer "forecast_retirement_age"
-    t.bigint "forecast_retirement_spend_cents"
     t.decimal "loan_tax_capital_growth", precision: 5, scale: 2
     t.decimal "loan_tax_dividend_yield", precision: 5, scale: 2
     t.decimal "loan_tax_franking_pct", precision: 5, scale: 2
-    t.bigint "loan_tax_gross_salary_cents"
-    t.boolean "loan_tax_has_hecs"
-    t.bigint "loan_tax_hecs_balance_cents"
     t.decimal "loan_tax_interest_rate", precision: 5, scale: 2
     t.bigint "loan_tax_loan_amount_cents"
     t.string "loan_tax_loan_type"
-    t.boolean "loan_tax_private_hospital_cover"
     t.integer "loan_tax_term_years"
     t.string "password_digest", null: false
     t.decimal "runway_annual_growth", precision: 5, scale: 2
@@ -117,6 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
   add_foreign_key "asset_contributions", "user_assets"
   add_foreign_key "asset_valuations", "user_assets"
   add_foreign_key "budget_items", "users"
+  add_foreign_key "financial_profiles", "users"
   add_foreign_key "user_assets", "users"
   add_foreign_key "user_liabilities", "users"
 end

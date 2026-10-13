@@ -1,5 +1,12 @@
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold mb-6">AI Assistant (Ollama)</h1>
+
+  <% if @profile && @profile.completeness_pct < 100 %>
+    <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 mb-6 text-sm">
+      Your profile is <strong><%= @profile.completeness_pct %>% complete</strong>. The assistant tailors answers to your age, income, super and goals, and only knows what you've told it.
+      <%= link_to "Complete your profile", profile_path, class: "font-semibold underline" %> or ask it to walk you through the gaps.
+    </div>
+  <% end %>
   
   <% if @messages.present? %>
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">

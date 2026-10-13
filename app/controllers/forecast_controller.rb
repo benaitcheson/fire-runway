@@ -29,8 +29,9 @@ class ForecastController < ApplicationController
   # Precedence for every input: typed params > saved settings > default.
   def load_inputs
     user = current_user
-    @current_age = int_param(:current_age) || saved_age(user) || DEFAULTS[:current_age]
-    @retirement_age = int_param(:retirement_age) || user.forecast_retirement_age ||
+    profile = user.profile
+    @current_age = int_param(:current_age) || profile.age || DEFAULTS[:current_age]
+    @retirement_age = int_param(:retirement_age) || profile.target_retirement_age ||
                       DEFAULTS[:retirement_age]
     @horizon_years = (int_param(:horizon_years) || user.forecast_horizon_years ||
                       DEFAULTS[:horizon_years]).clamp(1, NetWorth::Projection::MAX_YEARS)
@@ -41,7 +42,7 @@ class ForecastController < ApplicationController
                             from_cents(user.forecast_monthly_contribution_cents) ||
                             from_cents([user.monthly_budget_surplus_cents || 0, 0].max)
     @retirement_spend = float_param(:retirement_spend) ||
-                        from_cents(user.forecast_retirement_spend_cents) ||
+                        from_cents(profile.retirement_spend_monthly_cents) ||
                         from_cents(user.runway_monthly_spend_cents) ||
                         from_cents(budget_monthly_spend_cents)
 
@@ -49,10 +50,6 @@ class ForecastController < ApplicationController
       value = instance_variable_get(ivar)
       instance_variable_set(ivar, value.to_i) if value && (value % 1).zero?
     end
-  end
-
-  def saved_age(user)
-    user.forecast_birth_year && Date.today.year - user.forecast_birth_year
   end
 
   def int_param(key)
@@ -72,17 +69,21 @@ class ForecastController < ApplicationController
     (current_user.budget_items.where(section: %w[bills everyday]).sum(&:yearly_cents) / 12.0).round
   end
 
-  # Remember the last recalculated inputs so the page reopens with them. Age is
-  # stored as a birth year so it keeps ticking over without being re-entered.
+  # Remember the last recalculated inputs so the page reopens with them. The
+  # facts about the person (age, retirement age and spend) live on the profile
+  # so the AI assistant and other pages share them; age is stored as a birth
+  # year so it keeps ticking over without being re-entered.
   def remember_settings
     current_user.update!(
-      forecast_birth_year: Date.today.year - @current_age,
-      forecast_retirement_age: @retirement_age,
       forecast_horizon_years: @horizon_years,
       forecast_annual_growth: @annual_growth,
       forecast_inflation: @inflation,
-      forecast_monthly_contribution_cents: (@monthly_contribution.to_f * 100).round,
-      forecast_retirement_spend_cents: (@retirement_spend.to_f * 100).round
+      forecast_monthly_contribution_cents: (@monthly_contribution.to_f * 100).round
+    )
+    current_user.profile.update!(
+      birth_year: Date.today.year - @current_age,
+      target_retirement_age: @retirement_age,
+      retirement_spend_monthly_cents: (@retirement_spend.to_f * 100).round
     )
   end
 

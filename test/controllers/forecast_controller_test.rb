@@ -28,13 +28,14 @@ class ForecastControllerTest < ActionDispatch::IntegrationTest
                                 retirement_spend: 4200 }
     assert_response :success
     @user.reload
-    assert_equal Date.today.year - 34, @user.forecast_birth_year
-    assert_equal 55, @user.forecast_retirement_age
+    profile = @user.profile
+    assert_equal Date.today.year - 34, profile.birth_year
+    assert_equal 55, profile.target_retirement_age
     assert_equal 45, @user.forecast_horizon_years
     assert_equal 6.5, @user.forecast_annual_growth.to_f
     assert_equal 3.0, @user.forecast_inflation.to_f
     assert_equal 150_050, @user.forecast_monthly_contribution_cents
-    assert_equal 420_000, @user.forecast_retirement_spend_cents
+    assert_equal 420_000, profile.retirement_spend_monthly_cents
 
     get forecast_url
     assert_response :success
@@ -42,6 +43,16 @@ class ForecastControllerTest < ActionDispatch::IntegrationTest
     assert_match 'value="55"', response.body
     assert_match 'value="1500.5"', response.body
     assert_match 'value="4200"', response.body
+  end
+
+  test "reads age, retirement age and spend from the profile" do
+    @user.profile.update!(birth_year: Date.today.year - 41, target_retirement_age: 58,
+                          retirement_spend_monthly_cents: 350_000)
+    get forecast_url
+    assert_response :success
+    assert_match(/value="41"[^>]*name="current_age"/, response.body)
+    assert_match(/value="58"[^>]*name="retirement_age"/, response.body)
+    assert_match(/value="3500"[^>]*name="retirement_spend"/, response.body)
   end
 
   test "defaults contribution and spend from the budget" do

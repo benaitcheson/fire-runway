@@ -29,6 +29,9 @@ Rails.application.routes.draw do
   get "budget/up_import", to: "up_imports#new", as: :new_up_import
   post "budget/up_import", to: "up_imports#create", as: :up_import
   
+  # Fact finder: the facts about the person that every page and the AI share
+  resource :profile, only: [:show, :update], controller: "financial_profiles"
+
   # AI Assistant routes
   get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant
   post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat

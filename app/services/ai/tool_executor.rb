@@ -20,6 +20,27 @@ module Ai
       { error: "#{e.class}: #{e.message}" }.to_json
     end
 
+    def get_profile(_args = {})
+      profile = @user.profile
+      {
+        completeness_percent: profile.completeness_pct,
+        facts: profile.facts,
+        unanswered: profile.missing_fields.map(&:label)
+      }
+    end
+
+    def get_profile_gaps(_args = {})
+      profile = @user.profile
+      gaps = FinancialProfile::SECTIONS.filter_map do |_, section|
+        missing = section[:fields].reject { |f| profile.answered?(f) }
+        next if missing.empty?
+
+        { section: section[:title], questions: missing.map(&:question) }
+      end
+      { completeness_percent: profile.completeness_pct, gaps: gaps,
+        note: "Answers are saved on the Profile page in the app; you cannot save them yourself." }
+    end
+
     def get_net_worth_summary(_args = {})
       assets = @user.user_assets
       current_value = assets.sum(&:current_value_cents)

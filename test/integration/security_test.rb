@@ -12,7 +12,7 @@ class SecurityTest < ActionDispatch::IntegrationTest
 
   PROTECTED_GETS = [
     "/", "/dashboard/index", "/user_assets", "/user_liabilities",
-    "/budget", "/ai_assistant", "/investment_comparison", "/loan_tax"
+    "/budget", "/ai_assistant", "/investment_comparison", "/loan_tax", "/profile"
   ].freeze
 
   test "every protected page redirects logged-out users to login" do
@@ -33,6 +33,9 @@ class SecurityTest < ActionDispatch::IntegrationTest
     assert_redirected_to login_path
 
     post ai_assistant_chat_url, params: { prompt: "hi" }
+    assert_redirected_to login_path
+
+    patch profile_url, params: { financial_profile: { birth_year: 1990 } }
     assert_redirected_to login_path
   end
 
