@@ -1,19 +1,8 @@
 # One "fact finder" profile per user: the facts a financial planner asks for
-# that are about the person rather than any one calculator page. The columns
-# that the forecast and loan tax pages had been stashing on users move here so
-# there is a single source of truth that the AI assistant can read.
+# that are about the person rather than any one calculator page. The person
+# fields the forecast and loan tax pages had on users now live here.
 class CreateFinancialProfiles < ActiveRecord::Migration[8.1]
-  MOVED = {
-    forecast_birth_year: [:birth_year, :integer],
-    forecast_retirement_age: [:target_retirement_age, :integer],
-    forecast_retirement_spend_cents: [:retirement_spend_monthly_cents, :bigint],
-    loan_tax_gross_salary_cents: [:gross_salary_cents, :bigint],
-    loan_tax_has_hecs: [:has_hecs, :boolean],
-    loan_tax_hecs_balance_cents: [:hecs_balance_cents, :bigint],
-    loan_tax_private_hospital_cover: [:private_hospital_cover, :boolean]
-  }.freeze
-
-  def up
+  def change
     create_table :financial_profiles do |t|
       t.references :user, null: false, foreign_key: true, index: { unique: true }
 
@@ -59,26 +48,12 @@ class CreateFinancialProfiles < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    old_cols = MOVED.keys.join(", ")
-    new_cols = MOVED.values.map(&:first).join(", ")
-    any_set = MOVED.keys.map { |c| "#{c} IS NOT NULL" }.join(" OR ")
-    execute <<~SQL
-      INSERT INTO financial_profiles (user_id, #{new_cols}, created_at, updated_at)
-      SELECT id, #{old_cols}, NOW(), NOW() FROM users WHERE #{any_set}
-    SQL
-
-    MOVED.each_key { |column| remove_column :users, column }
-  end
-
-  def down
-    MOVED.each do |old, (_new, type)|
-      add_column :users, old, type
-    end
-    assignments = MOVED.map { |old, (new, _)| "#{old} = financial_profiles.#{new}" }.join(", ")
-    execute <<~SQL
-      UPDATE users SET #{assignments}
-      FROM financial_profiles WHERE financial_profiles.user_id = users.id
-    SQL
-    drop_table :financial_profiles
+    remove_column :users, :forecast_birth_year, :integer
+    remove_column :users, :forecast_retirement_age, :integer
+    remove_column :users, :forecast_retirement_spend_cents, :bigint
+    remove_column :users, :loan_tax_gross_salary_cents, :bigint
+    remove_column :users, :loan_tax_has_hecs, :boolean
+    remove_column :users, :loan_tax_hecs_balance_cents, :bigint
+    remove_column :users, :loan_tax_private_hospital_cover, :boolean
   end
 end
