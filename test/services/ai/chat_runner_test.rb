@@ -3,7 +3,7 @@ require "test_helper"
 class Ai::ChatRunnerTest < ActiveSupport::TestCase
   # Fake Ollama that returns scripted messages and records what it was sent.
   class FakeOllama
-    attr_reader :calls
+    attr_reader :calls, :tools
 
     def initialize(*messages)
       @script = messages
@@ -12,6 +12,7 @@ class Ai::ChatRunnerTest < ActiveSupport::TestCase
 
     def chat_with_tools(messages:, tools:, model:)
       @calls << messages.dup
+      @tools = tools
       @script.shift
     end
   end
@@ -24,9 +25,14 @@ class Ai::ChatRunnerTest < ActiveSupport::TestCase
 
   setup { @user = users(:one) }
 
-  def call_runner(ollama, prompt: "hi", off_topic: false)
-    Ai::ChatRunner.new(user: @user, prompt: prompt, model: "m",
-                       ollama: ollama, topic_guard: FakeGuard.new(off_topic)).call
+  def call_runner(ollama, prompt: "hi", off_topic: false, reference_library: Ai::ReferenceLibrary.default)
+    Ai::ChatRunner.new(user: @user, prompt: prompt, model: "m", ollama: ollama,
+                       topic_guard: FakeGuard.new(off_topic), reference_library: reference_library).call
+  end
+
+  def fixture_library
+    Ai::ReferenceLibrary.new(dir: Rails.root.join("test", "fixtures", "files", "reference_index"),
+                             embedder: ->(_) { [[1, 0, 0, 0]] })
   end
 
   test "returns content directly when the model uses no tools" do
@@ -126,6 +132,29 @@ class Ai::ChatRunnerTest < ActiveSupport::TestCase
 
     system = ollama.calls.first.first[:content]
     assert_includes system, "has not filled in their Profile page"
+  end
+
+  test "the reference tool and its prompt section are left out without an index" do
+    ollama = FakeOllama.new({ "content" => "ok" })
+    call_runner(ollama)
+
+    assert_not_includes ollama.tools.map { |t| t[:function][:name] }, "search_reference_library"
+    assert_not_includes ollama.calls.first.first[:content], "## Reference library"
+  end
+
+  test "searches the reference library when the model asks" do
+    ollama = FakeOllama.new(
+      { "content" => "", "tool_calls" => [{ "function" => { "name" => "search_reference_library",
+                                                            "arguments" => { "query" => "debt recycling" } } }] },
+      { "content" => "Aussie FIRE covers this in episode 19." }
+    )
+    result = call_runner(ollama, prompt: "is debt recycling worth it?", reference_library: fixture_library)
+
+    assert_includes ollama.tools.map { |t| t[:function][:name] }, "search_reference_library"
+    assert_includes ollama.calls.first.first[:content], "## Reference library"
+    tool_message = ollama.calls.last.find { |m| m[:role] == "tool" }
+    assert_match(/Debt recycling turns non-deductible/, tool_message[:content])
+    assert_equal "Aussie FIRE covers this in episode 19.", result[:content]
   end
 
   test "does not include another user's history" do

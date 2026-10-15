@@ -7,12 +7,14 @@ module Ai
     MAX_TURNS = 6
     HISTORY_LIMIT = 10
 
-    def initialize(user:, prompt:, model:, ollama: OllamaService.new, topic_guard: nil)
+    def initialize(user:, prompt:, model:, ollama: OllamaService.new, topic_guard: nil,
+                   reference_library: ReferenceLibrary.default)
       @user = user
       @prompt = prompt
       @model = model
       @ollama = ollama
-      @executor = ToolExecutor.new(user: user)
+      @reference_library = reference_library
+      @executor = ToolExecutor.new(user: user, reference_library: reference_library)
       @topic_guard = topic_guard || TopicGuard.new(model: model, ollama: ollama)
     end
 
@@ -24,12 +26,14 @@ module Ai
         return { content: TopicGuard::REFUSAL }
       end
 
-      system = Prompts.system_prompt(profile: @user.profile)
+      library = @reference_library.available?
+      system = Prompts.system_prompt(profile: @user.profile, reference_library: library)
+      tools = Tools.for(reference_library: @reference_library)
       messages = [{ role: "system", content: system }] + history +
                  [{ role: "user", content: @prompt }]
 
       MAX_TURNS.times do
-        message = @ollama.chat_with_tools(messages: messages, tools: Tools::ALL, model: @model)
+        message = @ollama.chat_with_tools(messages: messages, tools: tools, model: @model)
         return { error: message[:error] } if message.is_a?(Hash) && message[:error]
 
         tool_calls = message["tool_calls"]

@@ -88,4 +88,36 @@ class Ai::ToolExecutorTest < ActiveSupport::TestCase
     result = JSON.parse(@executor.execute("list_budget_items", { "section" => "shopping" }))
     assert_match(/section must be one of/, result["error"])
   end
+
+  def executor_with_library(vector)
+    library = Ai::ReferenceLibrary.new(dir: Rails.root.join("test", "fixtures", "files", "reference_index"),
+                                       embedder: ->(_) { [vector] })
+    Ai::ToolExecutor.new(user: @user, reference_library: library)
+  end
+
+  test "search_reference_library returns excerpts with a citation note" do
+    result = JSON.parse(executor_with_library([1, 0, 0, 0])
+               .execute("search_reference_library", { "query" => "debt recycling", "top_k" => 2 }))
+
+    assert_equal "Aussie FIRE episode 19: 19. Debt recycling", result["results"].first["source"]
+    assert_match(/Name the source/, result["note"])
+  end
+
+  test "search_reference_library says when nothing is relevant" do
+    result = JSON.parse(executor_with_library([0, 0, 0, 1])
+               .execute("search_reference_library", { "query" => "pizza" }))
+
+    assert_empty result["results"]
+    assert_match(/general knowledge/, result["note"])
+  end
+
+  test "search_reference_library requires a query" do
+    result = JSON.parse(executor_with_library([1, 0, 0, 0]).execute("search_reference_library", { "query" => " " }))
+    assert_equal "query is required", result["error"]
+  end
+
+  test "search_reference_library reports a missing index as an error" do
+    result = JSON.parse(@executor.execute("search_reference_library", { "query" => "super" }))
+    assert_match(/not been built/, result["error"])
+  end
 end

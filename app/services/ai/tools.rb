@@ -90,11 +90,39 @@ module Ai
             required: ["section"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_reference_library",
+          description: "Search the user's reference library of Australian personal finance " \
+                       "podcast transcripts and books for what experts say about a topic: " \
+                       "strategies, rules of thumb, explanations and examples (debt recycling, " \
+                       "FIRE, super contributions, ETFs, offset vs invest, and so on). Returns " \
+                       "excerpts with their source and date. Not for the user's own numbers.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string",
+                       description: "What to look up, phrased as a question or topic" },
+              top_k: { type: "integer", description: "Number of excerpts, 1-5 (default 3)" }
+            },
+            required: ["query"]
+          }
+        }
       }
     ].freeze
 
     def self.names
       ALL.map { |t| t[:function][:name] }
+    end
+
+    # The tools offered to the model: the reference search is left out when
+    # no index has been built, so the model never calls a dead tool.
+    def self.for(reference_library:)
+      return ALL if reference_library.available?
+
+      ALL.reject { |t| t[:function][:name] == "search_reference_library" }
     end
   end
 end

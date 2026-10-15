@@ -64,4 +64,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # No reference library by default, so nothing reaches Ollama; tests that need
+  # one build Ai::ReferenceLibrary over test/fixtures/files/reference_index.
+  config.x.reference_index_dir = Rails.root.join("tmp", "no-reference-index")
 end
