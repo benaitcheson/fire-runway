@@ -66,6 +66,7 @@ class FinancialProfilesControllerTest < ActionDispatch::IntegrationTest
     patch profile_url, params: { financial_profile: { birth_year: 1800, risk_tolerance: "yolo" } }
     assert_response :unprocessable_entity
     assert_match "prohibited this profile", response.body
+    assert_select "[role=alert]", text: /Profile not saved/
     assert_nil @user.reload.financial_profile
   end
 
@@ -74,6 +75,11 @@ class FinancialProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to profile_url
     assert_equal @user.id, @user.reload.financial_profile.user_id
     assert_nil users(:two).financial_profile
+  end
+
+  test "form submits as a full page load so the flash shows at the top" do
+    get profile_url
+    assert_select "form[action='#{profile_path}'][data-turbo=false]"
   end
 
   test "nav marks the profile section" do

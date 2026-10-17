@@ -15,7 +15,7 @@
     <% end %>
   </div>
 
-  <%= form_with model: @profile, url: profile_path, method: :patch, class: "space-y-6" do |form| %>
+  <%= form_with model: @profile, url: profile_path, method: :patch, class: "space-y-6", data: { turbo: false } do |form| %>
     <% if @profile.errors.any? %>
       <div class="bg-red-50 border border-red-200 rounded-md p-4">
         <h3 class="text-red-800 font-semibold mb-2"><%= pluralize(@profile.errors.count, "error") %> prohibited this profile from being saved:</h3>

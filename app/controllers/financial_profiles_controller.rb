@@ -10,6 +10,7 @@ class FinancialProfilesController < ApplicationController
     if @profile.update(profile_params)
       redirect_to profile_path, notice: "Profile saved. The AI assistant will use it from now on."
     else
+      flash.now[:alert] = "Profile not saved. Fix the errors below and try again."
       render :show, status: :unprocessable_entity
     end
   end
