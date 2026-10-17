@@ -20,7 +20,7 @@ FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libpq-dev libvips libyaml-dev pkg-config
+    apt-get install --no-install-recommends -y build-essential git libcurl4t64 libpq-dev libyaml-dev pkg-config
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
@@ -50,7 +50,7 @@ ENV GIT_SHA=$GIT_SHA \
 
 # Install packages needed for deployment
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libpq5 libvips && \
+    apt-get install --no-install-recommends -y curl libpq5 && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy built artifacts: gems, application
