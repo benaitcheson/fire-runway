@@ -1,9 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["prompt", "model", "response", "submit", "question"]
+  static targets = ["prompt", "model", "response", "submit", "question", "status", "elapsed"]
 
-  connect() {
+  disconnect() {
+    this.stopSpinner()
   }
 
   async submit(event) {
@@ -24,6 +25,10 @@ export default class extends Controller {
     // Show the question
     this.questionTarget.textContent = prompt
     this.questionTarget.parentElement.classList.remove("hidden")
+
+    // Hide the previous answer and show a spinner until this one arrives
+    this.responseTarget.parentElement.classList.add("hidden")
+    this.startSpinner()
 
     try {
       const response = await fetch("/ai_assistant/chat", {
@@ -56,9 +61,27 @@ export default class extends Controller {
       this.responseTarget.textContent = "Error: " + error.message
       this.responseTarget.parentElement.classList.remove("hidden")
     } finally {
+      this.stopSpinner()
+
       // Re-enable submit button
       this.submitTarget.disabled = false
       this.submitTarget.textContent = "Send"
     }
+  }
+
+  // Local models can take a while, so count the seconds to show it's still working
+  startSpinner() {
+    const startedAt = Date.now()
+    this.elapsedTarget.textContent = ""
+    this.statusTarget.classList.remove("hidden")
+    this.timer = setInterval(() => {
+      this.elapsedTarget.textContent = `${Math.floor((Date.now() - startedAt) / 1000)}s`
+    }, 1000)
+  }
+
+  stopSpinner() {
+    clearInterval(this.timer)
+    this.timer = null
+    if (this.hasStatusTarget) this.statusTarget.classList.add("hidden")
   }
 }
