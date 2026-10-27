@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -138,6 +138,64 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_000000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  create_table "will_asset_instructions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.decimal "owned_share_pct", precision: 5, scale: 2
+    t.string "ownership", default: "sole", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_asset_id", null: false
+    t.bigint "will_beneficiary_id"
+    t.bigint "will_plan_id", null: false
+    t.index ["user_asset_id"], name: "index_will_asset_instructions_on_user_asset_id"
+    t.index ["will_beneficiary_id"], name: "index_will_asset_instructions_on_will_beneficiary_id"
+    t.index ["will_plan_id", "user_asset_id"], name: "idx_on_will_plan_id_user_asset_id_a85507bc3a", unique: true
+    t.index ["will_plan_id"], name: "index_will_asset_instructions_on_will_plan_id"
+  end
+
+  create_table "will_beneficiaries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fallback", default: "their_children", null: false
+    t.string "fallback_name"
+    t.string "name", null: false
+    t.string "relationship"
+    t.decimal "residue_share_pct", precision: 5, scale: 2, default: "0.0", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "will_plan_id", null: false
+    t.index ["will_plan_id"], name: "index_will_beneficiaries_on_will_plan_id"
+  end
+
+  create_table "will_liability_instructions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "secured_asset_id"
+    t.datetime "updated_at", null: false
+    t.bigint "user_liability_id", null: false
+    t.bigint "will_plan_id", null: false
+    t.index ["secured_asset_id"], name: "index_will_liability_instructions_on_secured_asset_id"
+    t.index ["user_liability_id"], name: "index_will_liability_instructions_on_user_liability_id"
+    t.index ["will_plan_id", "user_liability_id"], name: "idx_on_will_plan_id_user_liability_id_e5bd45875a", unique: true
+    t.index ["will_plan_id"], name: "index_will_liability_instructions_on_will_plan_id"
+  end
+
+  create_table "will_plans", force: :cascade do |t|
+    t.string "backup_executor_name"
+    t.string "backup_guardian_name"
+    t.datetime "created_at", null: false
+    t.string "executor_name"
+    t.string "executor_relationship"
+    t.text "funeral_wishes"
+    t.string "guardian_name"
+    t.text "other_wishes"
+    t.date "signed_on"
+    t.string "state"
+    t.string "stored_at"
+    t.string "super_nomination"
+    t.string "super_nominee"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "will_status", default: "not_started", null: false
+    t.index ["user_id"], name: "index_will_plans_on_user_id", unique: true
+  end
+
   add_foreign_key "ai_messages", "users"
   add_foreign_key "asset_contributions", "user_assets"
   add_foreign_key "asset_valuations", "user_assets"
@@ -145,4 +203,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_000000) do
   add_foreign_key "financial_profiles", "users"
   add_foreign_key "user_assets", "users"
   add_foreign_key "user_liabilities", "users"
+  add_foreign_key "will_asset_instructions", "user_assets"
+  add_foreign_key "will_asset_instructions", "will_beneficiaries", on_delete: :nullify
+  add_foreign_key "will_asset_instructions", "will_plans"
+  add_foreign_key "will_beneficiaries", "will_plans"
+  add_foreign_key "will_liability_instructions", "user_assets", column: "secured_asset_id", on_delete: :nullify
+  add_foreign_key "will_liability_instructions", "user_liabilities"
+  add_foreign_key "will_liability_instructions", "will_plans"
+  add_foreign_key "will_plans", "users"
 end

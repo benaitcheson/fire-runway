@@ -89,6 +89,30 @@ class Ai::ToolExecutorTest < ActiveSupport::TestCase
     assert_match(/section must be one of/, result["error"])
   end
 
+  test "get_will_plan summarises the plan, estate and open issues" do
+    plan = @user.will
+    plan.update!(executor_name: "Sam")
+    alice = plan.beneficiaries.create!(name: "Alice", relationship: "sister", residue_share_pct: 100)
+    plan.asset_instructions.create!(user_asset: user_assets(:one), ownership: "sole", will_beneficiary: alice)
+
+    result = JSON.parse(@executor.execute("get_will_plan"))
+    assert_equal "Sam", result["executor"]
+    assert_equal 2500.0, result["estate"]["under_will"]
+    assert_equal 1000.0, result["estate"]["debts_paid_by_estate"]
+    assert_equal({ "name" => "Laptop", "value" => 2500.0, "held" => "In my name only", "goes_to" => "Alice" },
+                 result["assets"].sole)
+    assert_equal 1500.0, result["beneficiaries"].sole["estimated_total"]
+    assert result["open_issues"].any? { |i| i.include?("backup executor") }
+  end
+
+  test "get_will_plan works before a plan exists and never shows another user's" do
+    users(:two).will.tap(&:save!).beneficiaries.create!(name: "SECRET heir", residue_share_pct: 100)
+    result = @executor.execute("get_will_plan")
+    assert_no_match(/SECRET/, result)
+    assert_match(/Name an executor/, result)
+    assert_nil @user.reload.will_plan
+  end
+
   def executor_with_library(vector)
     library = Ai::ReferenceLibrary.new(dir: Rails.root.join("test", "fixtures", "files", "reference_index"),
                                        embedder: ->(_) { [vector] })

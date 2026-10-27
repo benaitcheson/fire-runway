@@ -1,0 +1,11 @@
+<%# Steps from plan to valid will. Shared by the planner and the printable summary. %>
+<section class="bg-white rounded-lg shadow-md p-6 mt-6 print:shadow-none print:p-0" aria-labelledby="legal-heading">
+  <h2 id="legal-heading" class="text-lg font-semibold text-gray-800 mb-3">Turning this into a valid will</h2>
+  <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+    <li><strong>Have it written.</strong> Take this summary to a lawyer, the <%= plan.public_trustee_name %><%= " (#{WillPlan::STATES[plan.state]})" if plan.state %> or a reputable will kit or online will service. A lawyer is worth it for a business, a family trust, a blended family or anyone you expect to contest the will.</li>
+    <li><strong>Sign it with two witnesses.</strong> Sign in front of two adult witnesses who are there at the same time, and have them sign too. Don't use a beneficiary, or a beneficiary's partner, as a witness: it can put their gift at risk.</li>
+    <li><strong>Store the original safely</strong> and tell your executor where it is. Your lawyer or the Public Trustee can hold it for you.</li>
+    <li><strong>Sort out the things a will can't do:</strong> a binding death benefit nomination for your super, beneficiary nominations on life insurance, and an enduring power of attorney for while you're alive.</li>
+    <li><strong>Review it</strong> every few years and after marriage, separation, divorce, a new child or a big change in assets. Marriage generally cancels an existing will, and divorce cancels gifts to a former spouse.</li>
+  </ol>
+</section>

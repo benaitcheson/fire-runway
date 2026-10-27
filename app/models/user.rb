@@ -21,6 +21,7 @@ class User < ApplicationRecord
   has_many :budget_items, dependent: :destroy
   has_many :ai_messages, dependent: :destroy
   has_one :financial_profile, dependent: :destroy
+  has_one :will_plan, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true
   validates_format_of :email, with: URI::MailTo::EMAIL_REGEXP
@@ -32,6 +33,11 @@ class User < ApplicationRecord
   # defaults or update! it without checking for nil.
   def profile
     financial_profile || build_financial_profile
+  end
+
+  # The will planner, built (unsaved) on first use like the profile.
+  def will
+    will_plan || build_will_plan
   end
 
   def confirm!

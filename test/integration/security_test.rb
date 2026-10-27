@@ -12,7 +12,7 @@ class SecurityTest < ActionDispatch::IntegrationTest
 
   PROTECTED_GETS = [
     "/", "/dashboard/index", "/user_assets", "/user_liabilities",
-    "/budget", "/ai_assistant", "/investment_comparison", "/loan_tax", "/profile"
+    "/budget", "/ai_assistant", "/investment_comparison", "/loan_tax", "/profile", "/will", "/will/summary"
   ].freeze
 
   test "every protected page redirects logged-out users to login" do
@@ -36,6 +36,9 @@ class SecurityTest < ActionDispatch::IntegrationTest
     assert_redirected_to login_path
 
     patch profile_url, params: { financial_profile: { birth_year: 1990 } }
+    assert_redirected_to login_path
+
+    patch will_url, params: { will_plan: { executor_name: "X" } }
     assert_redirected_to login_path
   end
 
@@ -84,6 +87,38 @@ class SecurityTest < ActionDispatch::IntegrationTest
     delete budget_item_url(theirs)
     assert_response :not_found
     assert_equal 1000, theirs.reload.amount_cents
+  end
+
+  test "will plan can't reach another user's assets or beneficiaries" do
+    theirs = users(:two).will.tap(&:save!)
+    their_beneficiary = theirs.beneficiaries.create!(name: "Their sister", residue_share_pct: 100)
+    sign_in_as @user
+
+    patch will_url, params: { will_plan: { asset_instructions_attributes: {
+      "0" => { user_asset_id: user_assets(:two).id, ownership: "sole" }
+    } } }
+    assert_response :unprocessable_entity
+    assert_equal 0, WillAssetInstruction.where(user_asset: user_assets(:two)).count
+
+    patch will_url, params: { will_plan: { asset_instructions_attributes: {
+      "0" => { user_asset_id: user_assets(:one).id, ownership: "sole", will_beneficiary_id: their_beneficiary.id }
+    } } }
+    assert_response :unprocessable_entity
+
+    patch will_url, params: { will_plan: { liability_instructions_attributes: {
+      "0" => { user_liability_id: user_liabilities(:two).id, secured_asset_id: user_assets(:two).id }
+    } } }
+    assert_response :unprocessable_entity
+    assert_equal 0, WillLiabilityInstruction.count
+
+    patch will_url, params: { will_plan: { beneficiaries_attributes: {
+      "0" => { id: their_beneficiary.id, name: "Hijacked" }
+    } } }
+    assert_response :not_found
+    assert_equal "Their sister", their_beneficiary.reload.name
+
+    get will_url
+    assert_no_match "Their sister", response.body
   end
 
   test "index pages only show own records" do

@@ -1,0 +1,118 @@
+<% rows = @estate.rows %>
+<% under_will = rows.reject { |r| r.route == :outside } %>
+<% outside = rows.select { |r| r.route == :outside } %>
+<div class="container mx-auto px-4 py-8 max-w-3xl print:max-w-none print:p-0 text-gray-900" data-controller="print">
+  <div class="flex flex-wrap justify-between items-center gap-4 mb-6 print:hidden">
+    <%= link_to "← Back to the planner", will_path, class: "text-sm text-blue-600 hover:underline" %>
+    <button type="button" data-action="print#print" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">Print</button>
+  </div>
+
+  <h1 class="text-2xl font-bold mb-1">Instructions for my will</h1>
+  <p class="text-sm text-gray-600 mb-6">
+    Prepared <%= Date.current.strftime("%-d %B %Y") %><%= " · #{WillPlan::STATES[@plan.state]}" if @plan.state %>.
+    These are my wishes for whoever drafts my will. This is not a will. Dollar amounts are today's estimates.
+  </p>
+
+  <% if (open = @estate.checks.reject { |c| c.level == :tip }).any? %>
+    <div class="border border-amber-300 bg-amber-50 rounded-md p-4 mb-6 text-sm">
+      <p class="font-semibold text-amber-900 mb-1">Still to sort out</p>
+      <ul class="list-disc list-inside text-amber-900 space-y-1">
+        <% open.each do |check| %><li><%= check.message %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% section = "text-lg font-semibold border-b border-gray-300 pb-1 mb-3 mt-6" %>
+  <h2 class="<%= section %>">Executor and guardian</h2>
+  <dl class="grid grid-cols-[12rem_1fr] gap-y-1 text-sm">
+    <dt class="text-gray-600">Executor</dt><dd><%= [@plan.executor_name, @plan.executor_relationship && "(#{@plan.executor_relationship})"].compact.join(" ").presence || "Not chosen yet" %></dd>
+    <dt class="text-gray-600">Backup executor</dt><dd><%= @plan.backup_executor_name || "None" %></dd>
+    <dt class="text-gray-600">Guardian of children under 18</dt><dd><%= @plan.guardian_name || "None" %></dd>
+    <dt class="text-gray-600">Backup guardian</dt><dd><%= @plan.backup_guardian_name || "None" %></dd>
+  </dl>
+
+  <h2 class="<%= section %>">Specific gifts</h2>
+  <% gifts = under_will.select { |r| r.route == :gift } %>
+  <% if gifts.empty? %>
+    <p class="text-sm text-gray-600">None. Everything goes into the residue.</p>
+  <% else %>
+    <table class="w-full text-sm">
+      <% gifts.each do |row| %>
+        <tr class="border-b border-gray-200">
+          <td class="py-1 pr-4"><%= row.asset_name %><%= " (my #{number_to_percentage(row.instruction.owned_share_pct, strip_insignificant_zeros: true)} share as tenant in common)" if row.instruction.ownership == "tenants_in_common" %></td>
+          <td class="py-1 pr-4">to <%= row.instruction.will_beneficiary.label %></td>
+          <td class="py-1 text-right whitespace-nowrap"><%= format_currency(row.estate_cents - row.carried_cents) %><%= " after its loan" if row.carried_cents.positive? %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
+
+  <h2 class="<%= section %>">The residue (everything else, after debts)</h2>
+  <% if @estate.beneficiaries.empty? %>
+    <p class="text-sm text-gray-600">No beneficiaries chosen yet.</p>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-gray-600 border-b border-gray-300"><th class="py-1 pr-4 font-medium">To</th><th class="py-1 pr-4 font-medium">Share</th><th class="py-1 font-medium">If they die before me</th></tr></thead>
+      <% @estate.beneficiaries.each do |beneficiary| %>
+        <tr class="border-b border-gray-200">
+          <td class="py-1 pr-4"><%= beneficiary.label %></td>
+          <td class="py-1 pr-4"><%= number_to_percentage(beneficiary.residue_share_pct, strip_insignificant_zeros: true) %></td>
+          <td class="py-1"><%= beneficiary.fallback_description %></td>
+        </tr>
+      <% end %>
+    </table>
+    <p class="text-xs text-gray-500 mt-1">Estimated residue: <%= format_currency(@estate.residue_cents) %>.</p>
+  <% end %>
+
+  <h2 class="<%= section %>">Assets that pass outside the will</h2>
+  <ul class="text-sm space-y-1">
+    <% outside.each do |row| %>
+      <li><%= row.asset_name %> (<%= format_currency(row.value_cents) %>): <%= row.instruction.ownership == "joint_tenants" ? "held as joint tenants, so it passes to the surviving co-owner" : "held outside the will (super, a trust or a company), so it follows that fund, trust or company's rules" %>.</li>
+    <% end %>
+    <% if @estate.profile_super_cents.positive? %>
+      <li>Super (<%= format_currency(@estate.profile_super_cents) %>)</li>
+    <% end %>
+    <% if outside.empty? && @estate.profile_super_cents.zero? %>
+      <li class="text-gray-600">None recorded.</li>
+    <% end %>
+  </ul>
+  <p class="text-sm mt-2">
+    Super death benefit nomination: <%= @plan.super_nomination ? WillPlan::SUPER_NOMINATIONS[@plan.super_nomination] : "not recorded" %><%= ", to #{@plan.super_nominee}" if @plan.super_nominee %>.
+  </p>
+
+  <h2 class="<%= section %>">Debts</h2>
+  <% if @estate.debt_rows.empty? %>
+    <p class="text-sm text-gray-600">None recorded.</p>
+  <% else %>
+    <table class="w-full text-sm">
+      <% @estate.debt_rows.each do |debt| %>
+        <tr class="border-b border-gray-200">
+          <td class="py-1 pr-4"><%= debt.name %></td>
+          <td class="py-1 pr-4 text-gray-600">
+            <%= { estate: "paid by my estate", with_gift: "secured on #{debt.asset_row&.asset_name}; passes with it to #{debt.asset_row&.recipient}",
+                  with_asset: "secured on #{debt.asset_row&.asset_name}; goes with it outside the will" }[debt.treatment] %>
+          </td>
+          <td class="py-1 text-right whitespace-nowrap"><%= format_currency(debt.amount_cents) %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
+  <p class="text-sm mt-2">
+    Estate under the will <%= format_currency(@estate.gross_cents) %>, less debts it carries
+    <%= format_currency(@estate.debts_cents + @estate.gift_carried_cents) %>:
+    net <%= @estate.net_cents.negative? ? "−#{format_currency(-@estate.net_cents)}" : format_currency(@estate.net_cents) %>.
+  </p>
+
+  <% if @plan.funeral_wishes || @plan.other_wishes %>
+    <h2 class="<%= section %>">Wishes</h2>
+    <% if @plan.funeral_wishes %><p class="text-sm mb-2"><span class="text-gray-600">Funeral:</span> <%= @plan.funeral_wishes %></p><% end %>
+    <% if @plan.other_wishes %><p class="text-sm whitespace-pre-line"><%= @plan.other_wishes %></p><% end %>
+  <% end %>
+
+  <% if @plan.stored_at || @plan.signed_on %>
+    <h2 class="<%= section %>">Current will</h2>
+    <p class="text-sm"><%= WillPlan::WILL_STATUSES[@plan.will_status] %><%= ", signed #{@plan.signed_on.strftime("%-d %B %Y")}" if @plan.signed_on %><%= ". Original kept: #{@plan.stored_at}" if @plan.stored_at %>.</p>
+  <% end %>
+
+  <%= render "making_it_legal", plan: @plan %>
+</div>

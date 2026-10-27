@@ -32,6 +32,11 @@ Rails.application.routes.draw do
   # Fact finder: the facts about the person that every page and the AI share
   resource :profile, only: [:show, :update], controller: "financial_profiles"
 
+  # Will planner: who gets what, and what passes outside the will
+  resource :will, only: [:show, :update], controller: "will_plans" do
+    get :summary
+  end
+
   # AI Assistant routes
   get "ai_assistant", to: "ai_assistant#index", as: :ai_assistant
   post "ai_assistant/chat", to: "ai_assistant#chat", as: :ai_assistant_chat

@@ -1,0 +1,335 @@
+<% input_class = "w-full px-3 py-2 border border-gray-300 rounded-md" %>
+<% label_class = "block text-sm font-medium text-gray-700 mb-1" %>
+<% rows = @estate.rows %>
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="flex flex-wrap justify-between items-start gap-4 mb-2">
+    <h1 class="text-3xl font-bold">Will planner</h1>
+    <%= link_to "Printable summary", summary_will_path,
+          class: "bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium py-2 px-4 rounded" %>
+  </div>
+  <p class="text-gray-600 mb-6">
+    Work out who gets what from your assets and debts before you see a lawyer, the
+    <%= @plan.public_trustee_name %> or a will kit. This page is a worksheet, not a will: a will only counts once
+    it's in writing, signed by you and witnessed by two adults together.
+  </p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <section class="bg-white rounded-lg shadow-md p-6" aria-labelledby="estate-heading">
+      <h2 id="estate-heading" class="text-lg font-semibold text-gray-800 mb-4">Your estate (estimate)</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="text-gray-600">Assets that pass under your will</dt><dd class="font-medium"><%= format_currency(@estate.gross_cents) %></dd></div>
+        <div class="flex justify-between"><dt class="text-gray-600">Debts the estate pays first</dt><dd class="font-medium text-red-700">−<%= format_currency(@estate.debts_cents) %></dd></div>
+        <% if @estate.gift_carried_cents.positive? %>
+          <div class="flex justify-between"><dt class="text-gray-600">Loans passing with gifted assets</dt><dd class="font-medium text-red-700">−<%= format_currency(@estate.gift_carried_cents) %></dd></div>
+        <% end %>
+        <div class="flex justify-between border-t pt-2"><dt class="font-semibold text-gray-800">Net estate</dt><dd class="font-semibold <%= @estate.net_cents.negative? ? "text-red-700" : "text-gray-900" %>"><%= @estate.net_cents.negative? ? "−#{format_currency(-@estate.net_cents)}" : format_currency(@estate.net_cents) %></dd></div>
+        <div class="flex justify-between"><dt class="text-gray-600">Of which specific gifts</dt><dd><%= format_currency(@estate.gift_cents - @estate.gift_shortfall_cents) %></dd></div>
+        <div class="flex justify-between"><dt class="text-gray-600">Of which residue (everything else)</dt><dd><%= format_currency(@estate.residue_cents) %></dd></div>
+        <div class="flex justify-between border-t pt-2"><dt class="text-gray-600">Passes outside your will (super, joint tenancy)</dt><dd><%= format_currency(@estate.outside_cents) %></dd></div>
+        <% if @estate.outside_debts_cents.positive? %>
+          <div class="flex justify-between"><dt class="text-gray-600">Loans that go with those assets</dt><dd class="text-red-700">−<%= format_currency(@estate.outside_debts_cents) %></dd></div>
+        <% end %>
+      </dl>
+      <p class="text-xs text-gray-500 mt-3">Values come from your Assets and Liabilities pages<%= " and your super balance from your Profile" if @estate.profile_super_cents.positive? %>.</p>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-md p-6" aria-labelledby="checks-heading">
+      <h2 id="checks-heading" class="text-lg font-semibold text-gray-800 mb-4">Plan check</h2>
+      <% if @estate.checks.empty? %>
+        <p class="text-green-800 bg-green-50 border border-green-200 rounded-md p-3 text-sm">Nothing missing. Print the summary and take it to whoever is writing your will.</p>
+      <% else %>
+        <ul class="space-y-2">
+          <% @estate.checks.each do |check| %>
+            <% badge = { action: "bg-red-100 text-red-800", warning: "bg-amber-100 text-amber-800", tip: "bg-blue-100 text-blue-800" }[check.level] %>
+            <li class="text-sm text-gray-700 flex gap-2 items-start">
+              <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded <%= badge %>"><%= WillPlanner::Estate::LEVELS[check.level] %></span>
+              <span><%= check.message %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  </div>
+
+  <% inheritances = @estate.inheritances %>
+  <% if inheritances.any? %>
+    <section class="bg-white rounded-lg shadow-md p-6 mb-6 overflow-x-auto" aria-labelledby="who-gets-heading">
+      <h2 id="who-gets-heading" class="text-lg font-semibold text-gray-800 mb-4">Who gets what (estimate)</h2>
+      <table class="w-full min-w-[34rem] text-sm">
+        <thead>
+          <tr class="text-left text-gray-500 border-b">
+            <th class="py-2 pr-4 font-medium">Beneficiary</th>
+            <th class="py-2 pr-4 font-medium">Specific gifts</th>
+            <th class="py-2 pr-4 font-medium text-right">Share of residue</th>
+            <th class="py-2 font-medium text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% inheritances.each do |inheritance| %>
+            <tr class="border-b last:border-0">
+              <td class="py-2 pr-4"><%= inheritance.beneficiary.label %></td>
+              <td class="py-2 pr-4 text-gray-600"><%= inheritance.gift_names.to_sentence.presence || "None" %><%= " (#{format_currency(inheritance.gift_cents)})" if inheritance.gift_names.any? %></td>
+              <td class="py-2 pr-4 text-right"><%= number_to_percentage(inheritance.beneficiary.residue_share_pct, strip_insignificant_zeros: true) %> · <%= format_currency(inheritance.residue_cents) %></td>
+              <td class="py-2 text-right font-semibold"><%= format_currency(inheritance.total_cents) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+
+  <%= form_with model: @plan, url: will_path, method: :patch, class: "space-y-6", data: { turbo: false } do |form| %>
+    <% errors = @plan.error_messages %>
+    <% if errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-md p-4">
+        <h3 class="text-red-800 font-semibold mb-2"><%= pluralize(errors.size, "error") %> stopped the plan from being saved:</h3>
+        <ul class="list-disc list-inside text-red-700">
+          <% errors.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">The people in charge</legend>
+      <p class="text-sm text-gray-500 mt-1">Your executor deals with your estate: pays debts, sells or transfers assets and hands out what's left. Pick someone you trust who is organised; they can also be a beneficiary.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div>
+          <%= form.label :executor_name, "Executor", class: label_class %>
+          <%= form.text_field :executor_name, class: input_class, placeholder: "Full name" %>
+        </div>
+        <div>
+          <%= form.label :executor_relationship, "Their relationship to you", class: label_class %>
+          <%= form.text_field :executor_relationship, class: input_class, placeholder: "e.g. partner, sister" %>
+        </div>
+        <div>
+          <%= form.label :backup_executor_name, "Backup executor", class: label_class %>
+          <%= form.text_field :backup_executor_name, class: input_class, placeholder: "If the first can't act" %>
+        </div>
+        <div>
+          <%= form.label :guardian_name, "Guardian for children under 18", class: label_class %>
+          <%= form.text_field :guardian_name, class: input_class, placeholder: "Leave blank if not needed" %>
+        </div>
+        <div>
+          <%= form.label :backup_guardian_name, "Backup guardian", class: label_class %>
+          <%= form.text_field :backup_guardian_name, class: input_class %>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6 overflow-x-auto min-w-0">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Beneficiaries</legend>
+      <p class="text-sm text-gray-500 mt-1">Who shares the residue: everything left after debts and specific gifts. Shares must add up to 100%. Save to add new people to the "Goes to" lists below.</p>
+      <table class="w-full min-w-[46rem] text-sm mt-4">
+        <thead>
+          <tr class="text-left text-gray-500">
+            <th class="pb-2 pr-2 font-medium">Name</th>
+            <th class="pb-2 pr-2 font-medium">Relationship</th>
+            <th class="pb-2 pr-2 font-medium">Residue share</th>
+            <th class="pb-2 pr-2 font-medium">If they die before you, their share goes to</th>
+            <th class="pb-2 font-medium">Remove</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%# Two blank rows for adding people; a blank row is ignored on save. %>
+          <% @plan.beneficiaries.build until @plan.beneficiaries.to_a.count { |b| b.new_record? && b.name.blank? } >= 2 %>
+          <% @plan.beneficiaries.to_a.each_with_index do |beneficiary, index| %>
+            <%= form.fields_for :beneficiaries, beneficiary, child_index: index do |b| %>
+              <tr class="align-top">
+                <td class="py-1 pr-2"><%= b.text_field :name, class: input_class, placeholder: beneficiary.persisted? ? nil : "Add someone", aria: { label: "Beneficiary name" } %></td>
+                <td class="py-1 pr-2"><%= b.text_field :relationship, class: input_class, aria: { label: "Relationship" } %></td>
+                <td class="py-1 pr-2">
+                  <div class="relative w-28">
+                    <%= b.number_field :residue_share_pct, step: :any, min: 0, max: 100, class: "#{input_class} pr-8 text-right", aria: { label: "Residue share" } %>
+                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+                  </div>
+                </td>
+                <td class="py-1 pr-2">
+                  <%= b.select :fallback, options_for_select(WillBeneficiary::FALLBACKS.invert, beneficiary.fallback), {}, class: "#{input_class} bg-white", aria: { label: "Fallback" } %>
+                  <%= b.text_field :fallback_name, class: "#{input_class} mt-1", placeholder: "Name, if someone else", aria: { label: "Fallback name" } %>
+                </td>
+                <td class="py-1 text-center">
+                  <% if beneficiary.persisted? %>
+                    <%= b.check_box :_destroy, aria: { label: "Remove #{beneficiary.name}" } %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="text-sm mt-2 <%= @plan.residue_share_total == 100 || @plan.beneficiaries.none?(&:persisted?) ? "text-gray-500" : "text-red-700 font-medium" %>">
+        Residue shares total: <%= number_to_percentage(@plan.residue_share_total, strip_insignificant_zeros: true) %>
+      </p>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6 overflow-x-auto min-w-0">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Your assets</legend>
+      <p class="text-sm text-gray-500 mt-1">
+        How each asset is held decides whether your will can pass it on. Jointly owned property is usually held as
+        joint tenants, which goes straight to the other owner; check the title if you're not sure. Anything not
+        gifted to someone falls into the residue.
+      </p>
+      <% if rows.empty? %>
+        <p class="text-sm text-gray-600 mt-4">No assets yet. <%= link_to "Add your assets", user_assets_path, class: "text-blue-600 hover:underline" %> to plan who gets them.</p>
+      <% else %>
+        <% persisted_beneficiaries = @plan.beneficiaries.select(&:persisted?) %>
+        <table class="w-full min-w-[46rem] text-sm mt-4">
+          <thead>
+            <tr class="text-left text-gray-500">
+              <th class="pb-2 pr-2 font-medium">Asset</th>
+              <th class="pb-2 pr-2 font-medium text-right">Value</th>
+              <th class="pb-2 pr-2 font-medium">How it's held</th>
+              <th class="pb-2 pr-2 font-medium">Your share</th>
+              <th class="pb-2 font-medium">Goes to</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.each_with_index do |row, index| %>
+              <% instruction = row.instruction %>
+              <%= form.fields_for :asset_instructions, instruction, child_index: index do |a| %>
+                <tr class="align-top">
+                  <td class="py-1 pr-2 pt-3">
+                    <%= row.asset_name %>
+                    <%= a.hidden_field :user_asset_id %>
+                  </td>
+                  <td class="py-1 pr-2 pt-3 text-right whitespace-nowrap"><%= format_currency(row.value_cents) %></td>
+                  <td class="py-1 pr-2">
+                    <%= a.select :ownership, options_for_select(WillAssetInstruction::OWNERSHIPS.invert, instruction.ownership), {},
+                          class: "#{input_class} bg-white", aria: { label: "How #{row.asset_name} is held" } %>
+                  </td>
+                  <td class="py-1 pr-2">
+                    <div class="relative w-28">
+                      <%= a.number_field :owned_share_pct, step: :any, min: 0, max: 100, class: "#{input_class} pr-8 text-right",
+                            placeholder: "—", aria: { label: "Your share of #{row.asset_name}" } %>
+                      <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Tenants in common only</p>
+                  </td>
+                  <td class="py-1">
+                    <%= a.select :will_beneficiary_id, options_for_select(persisted_beneficiaries.map { |b| [b.name, b.id] }, instruction.will_beneficiary_id),
+                          { include_blank: "The residue" }, class: "#{input_class} bg-white min-w-[10rem]", aria: { label: "Who gets #{row.asset_name}" } %>
+                    <% if row.route == :outside %>
+                      <p class="text-xs text-gray-500 mt-1">Doesn't apply: goes to the <%= row.recipient.downcase %></p>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6 overflow-x-auto min-w-0">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Your debts</legend>
+      <p class="text-sm text-gray-500 mt-1">
+        A debt secured on an asset, like a home or car loan, is paid from that asset first: it goes with the asset to
+        whoever gets it. Other debts are paid out of the estate before anyone inherits, starting with the residue.
+        Amounts come from your <%= link_to "Liabilities", user_liabilities_path, class: "text-blue-600 hover:underline" %> page.
+      </p>
+      <% debt_rows = @estate.debt_rows %>
+      <% if debt_rows.empty? %>
+        <p class="text-sm text-gray-600 mt-4">No debts recorded.</p>
+      <% else %>
+        <% assets_for_select = rows.map { |r| [r.asset_name, r.instruction.user_asset_id] } %>
+        <table class="w-full min-w-[40rem] text-sm mt-4">
+          <thead>
+            <tr class="text-left text-gray-500">
+              <th class="pb-2 pr-2 font-medium">Debt</th>
+              <th class="pb-2 pr-2 font-medium text-right">Amount</th>
+              <th class="pb-2 pr-2 font-medium">Secured on</th>
+              <th class="pb-2 font-medium">Who pays it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% debt_rows.each_with_index do |debt, index| %>
+              <%= form.fields_for :liability_instructions, debt.instruction, child_index: index do |l| %>
+                <tr class="align-top">
+                  <td class="py-1 pr-2 pt-3"><%= debt.name %><%= l.hidden_field :user_liability_id %></td>
+                  <td class="py-1 pr-2 pt-3 text-right whitespace-nowrap"><%= format_currency(debt.amount_cents) %></td>
+                  <td class="py-1 pr-2">
+                    <%= l.select :secured_asset_id, options_for_select(assets_for_select, debt.instruction.secured_asset_id),
+                          { include_blank: "Nothing (unsecured)" }, class: "#{input_class} bg-white min-w-[10rem]",
+                          aria: { label: "What #{debt.name} is secured on" } %>
+                  </td>
+                  <td class="py-1 pt-3 text-gray-600">
+                    <%= { estate: "The estate", with_gift: "Goes with the gift to #{debt.asset_row&.recipient}",
+                          with_asset: "Goes with #{debt.asset_row&.asset_name}, outside the will" }[debt.treatment] %>
+                  </td>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr class="font-semibold border-t"><td class="pt-2">Total</td><td class="pt-2 text-right"><%= format_currency(@estate.total_debts_cents) %></td><td colspan="2"></td></tr>
+          </tfoot>
+        </table>
+      <% end %>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Super and insurance</legend>
+      <p class="text-sm text-gray-500 mt-1">
+        Super doesn't automatically follow your will: the fund pays it out, and without a binding death benefit
+        nomination its trustee decides who receives it. Life insurance held in super follows the same nomination.
+        <% if @estate.profile_super_cents.positive? %>Your Profile shows <%= format_currency(@estate.profile_super_cents) %> in super.<% end %>
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <%= form.label :super_nomination, "Super death benefit nomination", class: label_class %>
+          <%= form.select :super_nomination, options_for_select(WillPlan::SUPER_NOMINATIONS.invert, @plan.super_nomination),
+                { include_blank: "Not answered" }, class: "#{input_class} bg-white" %>
+        </div>
+        <div>
+          <%= form.label :super_nominee, "Nominated to", class: label_class %>
+          <%= form.text_field :super_nominee, class: input_class, placeholder: "e.g. my partner, or my estate" %>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Wishes</legend>
+      <div class="grid grid-cols-1 gap-4 mt-3">
+        <div>
+          <%= form.label :funeral_wishes, "Funeral wishes", class: label_class %>
+          <%= form.text_area :funeral_wishes, rows: 2, class: input_class, placeholder: "Burial or cremation, any service preferences" %>
+        </div>
+        <div>
+          <%= form.label :other_wishes, "Anything else", class: label_class %>
+          <%= form.text_area :other_wishes, rows: 3, class: input_class, placeholder: "Pets, sentimental items, online accounts, charities" %>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="bg-white rounded-lg shadow-md p-6">
+      <legend class="text-lg font-semibold text-gray-800 mb-1">Where it's up to</legend>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+        <div>
+          <%= form.label :state, "State or territory", class: label_class %>
+          <%= form.select :state, options_for_select(WillPlan::STATES.invert, @plan.state), { include_blank: "Not answered" }, class: "#{input_class} bg-white" %>
+        </div>
+        <div>
+          <%= form.label :will_status, "Status", class: label_class %>
+          <%= form.select :will_status, options_for_select(WillPlan::WILL_STATUSES.invert, @plan.will_status), {}, class: "#{input_class} bg-white" %>
+        </div>
+        <div>
+          <%= form.label :signed_on, "Date signed", class: label_class %>
+          <%= form.date_field :signed_on, max: Date.current, class: input_class %>
+        </div>
+        <div>
+          <%= form.label :stored_at, "Where the original is kept", class: label_class %>
+          <%= form.text_field :stored_at, class: input_class, placeholder: "e.g. with my solicitor" %>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="flex items-center gap-4">
+      <%= form.submit "Save will plan", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+      <%= link_to "Printable summary", summary_will_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+  <% end %>
+
+  <%= render "making_it_legal", plan: @plan %>
+</div>

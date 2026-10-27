@@ -132,6 +132,41 @@ module Ai
       { section: section, items: items }
     end
 
+    def get_will_plan(_args = {})
+      plan = @user.will
+      estate = WillPlanner::Estate.new(plan)
+      {
+        status: WillPlan::WILL_STATUSES[plan.will_status],
+        state: plan.state,
+        executor: plan.executor_name, backup_executor: plan.backup_executor_name,
+        guardian: plan.guardian_name, backup_guardian: plan.backup_guardian_name,
+        super_nomination: plan.super_nomination && WillPlan::SUPER_NOMINATIONS[plan.super_nomination],
+        estate: {
+          under_will: dollars(estate.gross_cents), debts_paid_by_estate: dollars(estate.debts_cents),
+          loans_passing_with_gifts: dollars(estate.gift_carried_cents),
+          net: dollars(estate.net_cents), residue: dollars(estate.residue_cents),
+          outside_will: dollars(estate.outside_cents),
+          loans_going_with_outside_assets: dollars(estate.outside_debts_cents)
+        },
+        debts: estate.debt_rows.map do |debt|
+          { name: debt.name, amount: dollars(debt.amount_cents),
+            secured_on: debt.asset_row&.asset_name, paid_by: debt.treatment.to_s }
+        end,
+        assets: estate.rows.map do |row|
+          { name: row.asset_name, value: dollars(row.value_cents),
+            held: WillAssetInstruction::OWNERSHIPS[row.instruction.ownership],
+            goes_to: row.recipient }
+        end,
+        beneficiaries: estate.inheritances.map do |i|
+          { name: i.beneficiary.name, relationship: i.beneficiary.relationship,
+            residue_share_percent: i.beneficiary.residue_share_pct.to_f,
+            gifts: i.gift_names, estimated_total: dollars(i.total_cents) }
+        end,
+        open_issues: estate.checks.map { |c| "#{WillPlanner::Estate::LEVELS[c.level]}: #{c.message}" },
+        note: "A planning worksheet, not a will. The user edits it on the Will page."
+      }
+    end
+
     def search_reference_library(args = {})
       query = args["query"].to_s.strip
       return { error: "query is required" } if query.blank?

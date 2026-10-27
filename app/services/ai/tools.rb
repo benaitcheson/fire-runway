@@ -94,6 +94,17 @@ module Ai
       {
         type: "function",
         function: {
+          name: "get_will_plan",
+          description: "The user's will plan from the Will page: executor and guardian, " \
+                       "beneficiaries and their residue shares, which assets pass under the will " \
+                       "or outside it (joint tenancy, super), estimated estate after debts, what " \
+                       "each beneficiary would receive, and the plan's open issues.",
+          parameters: { type: "object", properties: {}, required: [] }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "search_reference_library",
           description: "Search the user's reference library of Australian personal finance " \
                        "podcast transcripts and books for what experts say about a topic: " \

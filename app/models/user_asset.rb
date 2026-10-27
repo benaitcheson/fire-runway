@@ -20,6 +20,9 @@ class UserAsset < ApplicationRecord
   belongs_to :user
   has_many :asset_contributions, dependent: :destroy
   has_many :asset_valuations, dependent: :destroy
+  has_many :will_asset_instructions, dependent: :destroy
+  has_many :secured_will_liability_instructions, class_name: "WillLiabilityInstruction",
+           foreign_key: :secured_asset_id, dependent: :nullify
 
   DEPRECIATION_METHODS = {
     'none' => 'No Depreciation',

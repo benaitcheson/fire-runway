@@ -20,6 +20,7 @@
 #
 class UserLiability < ApplicationRecord
   belongs_to :user
+  has_many :will_liability_instructions, dependent: :destroy
   
   validates :item_name, presence: true, length: { minimum: 2, maximum: 100 }
   validates :amount_cents, presence: true, numericality: { greater_than: 0 }
